@@ -1,0 +1,40 @@
+[package]
+name = "circulant-rs"
+version = "0.1.0"
+edition = "2021"
+description = "High-performance block-circulant matrix operations using FFT"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+keywords = ["fft", "circulant", "matrix", "quantum", "physics"]
+categories = ["algorithms", "mathematics", "science"]
+
+[features]
+default = ["std", "physics", "parallel", "serde"]
+std = []
+physics = []
+parallel = ["rayon", "ndarray/rayon"]
+serde = ["dep:serde", "dep:bincode", "ndarray/serde", "num-complex/serde"]
+
+[dependencies]
+rustfft = "6.2"
+num-complex = { version = "0.4", features = [] }
+num-traits = "0.2"
+ndarray = "0.16"
+thiserror = "2.0"
+rayon = { version = "1.10", optional = true }
+serde = { version = "1.0", features = ["derive"], optional = true }
+bincode = { version = "1.3", optional = true }
+
+[dev-dependencies]
+approx = "0.5"
+proptest = "1.5"
+criterion = "0.5"
+
+[[bench]]
+name = "fft_multiply"
+harness = false
+
+[[bench]]
+name = "scaling_benchmark"
+path = "benches/comparative/scaling_benchmark.rs"
+harness = false
