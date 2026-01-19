@@ -189,7 +189,7 @@ fn main() {
 | **Cryptography** | Lattice-based schemes (NTRU) | Efficient polynomial multiplication |
 | **Machine Learning** | Circulant neural network layers | Reduced parameter count with structured weights |
 
-See [docs/MARKETING.md](./docs/MARKETING.md) for detailed use case examples with code.
+See [docs/OVERVIEW.md](./docs/OVERVIEW.md) for detailed use case examples with code.
 
 ## Mathematical Background
 
