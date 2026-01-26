@@ -1,0 +1,21 @@
+# --- Rust specifično ---
+target/
+**/*.rs.bk
+Cargo.lock
+
+# --- Dokumentacija in generirano ---
+/doc/
+**/*.html
+**/*.css
+**/*.js
+
+# --- Testni podatki in logi ---
+tests/fixtures/
+**/*.log
+core.*
+
+# --- Sistemske in IDE datoteke ---
+.git/
+.idea/
+.vscode/
+.env*

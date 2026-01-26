@@ -6,9 +6,7 @@ use num_traits::{Float, FloatConst, NumAssign, One, Zero};
 /// A real scalar type suitable for circulant matrix operations.
 ///
 /// This trait is implemented for `f32` and `f64`.
-pub trait Scalar:
-    Float + FloatConst + NumAssign + Send + Sync + Copy + Default + 'static
-{
+pub trait Scalar: Float + FloatConst + NumAssign + Send + Sync + Copy + Default + 'static {
     /// The name of this scalar type (for debugging).
     fn type_name() -> &'static str;
 }

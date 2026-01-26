@@ -1,6 +1,8 @@
-# Benchmark Proposal: circulant-rs Performance Validation
+# Benchmarks
 
-*A rigorous methodology for comparing circulant-rs against state-of-the-art alternatives*
+**Version:** 0.1.0 | **Updated:** 2024-01-26 | **Reading time:** 15 min
+
+> Performance validation methodology and results for circulant-rs.
 
 ---
 

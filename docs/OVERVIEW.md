@@ -1,6 +1,8 @@
 # circulant-rs: O(N log N) Matrix Operations with 99.999% Memory Reduction
 
-*Transform trillion-element matrix problems into millisecond computations*
+**Version:** 0.1.0 | **Updated:** 2024-01-26 | **Reading time:** 10 min
+
+> Transform trillion-element matrix problems into millisecond computations.
 
 ---
 
@@ -434,8 +436,8 @@ cd benchmarks/python && python compare_circulant.py
 ### Documentation
 
 - **API Reference**: `cargo doc --open`
-- **Architecture Guide**: [ARCHITECTURE.md](../ARCHITECTURE.md)
-- **Benchmark Methodology**: [BENCHMARK_PROPOSAL.md](./BENCHMARK_PROPOSAL.md)
+- **Architecture Guide**: [ARCHITECTURE.md](./ARCHITECTURE.md)
+- **Benchmark Methodology**: [BENCHMARKS.md](./BENCHMARKS.md)
 - **Examples**: `cargo run --example quantum_walk_1d`
 
 ---

@@ -1,6 +1,8 @@
 # Architecture: circulant-rs
 
-This document provides an in-depth technical description of the `circulant-rs` library architecture, suitable for developers who want to understand, extend, or contribute to the codebase at an expert level.
+**Version:** 0.1.0 | **Updated:** 2024-01-26 | **Reading time:** 30 min
+
+> In-depth technical description for developers who want to understand, extend, or contribute.
 
 ## Table of Contents
 

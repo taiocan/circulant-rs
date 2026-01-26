@@ -12,4 +12,6 @@ pub use crate::fft::{FftBackend, RustFftBackend};
 pub use crate::traits::{BlockOps, CirculantOps, ComplexScalar, Scalar};
 
 #[cfg(feature = "physics")]
-pub use crate::physics::{Coin, CoinedWalk1D, QuantumState, QuantumWalk};
+pub use crate::physics::{
+    CirculantHamiltonian, Coin, CoinedWalk1D, CoinedWalk2D, Hamiltonian, QuantumState, QuantumWalk,
+};

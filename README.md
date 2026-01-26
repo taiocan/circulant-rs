@@ -1,5 +1,7 @@
 # circulant-rs
 
+**Version:** 0.1.0 | **Updated:** 2024-01-26 | **Reading time:** 5 min
+
 A high-performance Rust library for block-circulant matrix operations and quantum walk simulations.
 
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)]()
@@ -27,6 +29,7 @@ N=1M: Dense 7.5 TB → circulant-rs 8 MB
 *From impossible to trivial*
 
 </td>
+
 <td width="33%" align="center">
 
 ### 🔬 1000× Larger Simulations
@@ -230,7 +233,7 @@ The shift operator is a circulant matrix, enabling FFT-accelerated simulation.
 
 ## Architecture
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed technical documentation including:
+See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for detailed technical documentation including:
 
 - Module structure and dependencies
 - Type system and trait hierarchy
@@ -318,7 +321,7 @@ cargo run --example quantum_walk_1d --features physics
 - Criterion reports include statistical analysis (mean, std dev, outliers)
 - Compare your results with the tables above; relative speedups should be consistent across hardware
 
-For detailed methodology, see [docs/BENCHMARK_PROPOSAL.md](./docs/BENCHMARK_PROPOSAL.md).
+For detailed methodology, see [docs/BENCHMARKS.md](./docs/BENCHMARKS.md).
 
 ## Roadmap
 

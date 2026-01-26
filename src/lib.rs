@@ -13,9 +13,14 @@
 //! # Features
 //!
 //! - `std` (default): Enable standard library features
-//! - `physics`: Enable quantum physics module (quantum walks, coins)
-//! - `parallel`: Enable parallel computation with rayon
-//! - `serde`: Enable serialization with serde/bincode
+//! - `physics` (default): Enable quantum physics module (quantum walks, coins, Hamiltonians)
+//! - `parallel` (default): Enable parallel computation with rayon
+//! - `serde` (default): Enable serialization with serde/bincode
+//! - `vision`: Enable image processing with BCCB filters
+//! - `visualize`: Enable visualization with plotters (base feature)
+//! - `visualize-svg`: Enable SVG output for visualization
+//! - `visualize-bitmap`: Enable bitmap output for visualization
+//! - `python`: Enable Python bindings via PyO3
 //!
 //! # Example
 //!
@@ -45,6 +50,15 @@ pub mod traits;
 
 #[cfg(feature = "physics")]
 pub mod physics;
+
+#[cfg(feature = "vision")]
+pub mod vision;
+
+#[cfg(feature = "visualize")]
+pub mod visualize;
+
+#[cfg(feature = "python")]
+mod python;
 
 pub mod prelude;
 
