@@ -5,6 +5,9 @@ edition = "2021"
 description = "High-performance block-circulant matrix operations using FFT"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
+repository = "https://github.com/taiocan/circulant-rs"
+homepage = "https://github.com/taiocan/circulant-rs"
+documentation = "https://docs.rs/circulant-rs"
 keywords = ["fft", "circulant", "matrix", "quantum", "physics"]
 categories = ["algorithms", "mathematics", "science"]
 
