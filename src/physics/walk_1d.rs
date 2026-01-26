@@ -56,24 +56,37 @@ impl<T: Scalar + rustfft::FftNum> CoinedWalk1D<T> {
     ///
     /// * `num_positions` - Number of positions on the cycle (must be > 0)
     /// * `coin` - The coin operator (must have dimension 2 for standard walks)
-    pub fn new(num_positions: usize, coin: Coin) -> Self {
-        assert!(num_positions > 0, "Number of positions must be positive");
-        assert_eq!(coin.dimension(), 2, "1D walk requires 2D coin");
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `num_positions` is 0 or if coin dimension is not 2.
+    pub fn new(num_positions: usize, coin: Coin) -> crate::error::Result<Self> {
+        if num_positions == 0 {
+            return Err(crate::error::CirculantError::InvalidWalkParameters(
+                "number of positions must be positive".to_string(),
+            ));
+        }
+        if coin.dimension() != 2 {
+            return Err(crate::error::CirculantError::InvalidCoinDimension {
+                expected: 2,
+                got: coin.dimension(),
+            });
+        }
 
-        let fft = Arc::new(RustFftBackend::new(num_positions));
+        let fft = Arc::new(RustFftBackend::new(num_positions)?);
         let coin_matrix = Some(coin.to_matrix());
 
         // Precompute shift spectra
         let (left_spectrum, right_spectrum) = Self::compute_shift_spectra(num_positions, &fft);
 
-        Self {
+        Ok(Self {
             num_positions,
             coin,
             coin_matrix,
             fft: Some(fft),
             left_shift_spectrum: Some(left_spectrum),
             right_shift_spectrum: Some(right_spectrum),
-        }
+        })
     }
 
     /// Compute the FFT spectra for left and right shifts.
@@ -95,15 +108,20 @@ impl<T: Scalar + rustfft::FftNum> CoinedWalk1D<T> {
     }
 
     /// Ensure internal state is initialized (useful after deserialization).
-    pub fn ensure_initialized(&mut self) {
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if FFT initialization fails.
+    pub fn ensure_initialized(&mut self) -> crate::error::Result<()> {
         if self.fft.is_none() {
-            let fft = Arc::new(RustFftBackend::new(self.num_positions));
+            let fft = Arc::new(RustFftBackend::new(self.num_positions)?);
             let (left, right) = Self::compute_shift_spectra(self.num_positions, &fft);
             self.fft = Some(fft);
             self.left_shift_spectrum = Some(left);
             self.right_shift_spectrum = Some(right);
             self.coin_matrix = Some(self.coin.to_matrix());
         }
+        Ok(())
     }
 
     /// Get the coin operator.
@@ -117,7 +135,10 @@ impl<T: Scalar + rustfft::FftNum> CoinedWalk1D<T> {
         amplitudes: &[Complex<T>],
         spectrum: &[Complex<T>],
     ) -> Vec<Complex<T>> {
-        let fft = self.fft.as_ref().unwrap();
+        let fft = match self.fft.as_ref() {
+            Some(f) => f,
+            None => return amplitudes.to_vec(),
+        };
 
         // FFT of input
         let mut x_fft = amplitudes.to_vec();
@@ -142,9 +163,14 @@ impl<T: Scalar + rustfft::FftNum> QuantumWalk<T> for CoinedWalk1D<T> {
 
     fn step(&self, state: &mut QuantumState<T>) {
         let n = self.num_positions;
-        let coin_matrix = self.coin_matrix.as_ref().unwrap();
-        let left_spectrum = self.left_shift_spectrum.as_ref().unwrap();
-        let right_spectrum = self.right_shift_spectrum.as_ref().unwrap();
+        let (coin_matrix, left_spectrum, right_spectrum) = match (
+            self.coin_matrix.as_ref(),
+            self.left_shift_spectrum.as_ref(),
+            self.right_shift_spectrum.as_ref(),
+        ) {
+            (Some(c), Some(l), Some(r)) => (c, l, r),
+            _ => return, // Not initialized - no-op
+        };
 
         // Step 1: Apply coin operator at each position
         // For each position x: |x,c⟩ → Σ_c' C_{c',c} |x,c'⟩
@@ -199,7 +225,7 @@ mod tests {
 
     #[test]
     fn test_single_step_preserves_norm() {
-        let walk = CoinedWalk1D::<f64>::new(256, Coin::Hadamard);
+        let walk = CoinedWalk1D::<f64>::new(256, Coin::Hadamard).unwrap();
         let mut state = QuantumState::localized(128, 256, 2).unwrap();
 
         let initial_norm = state.norm_squared();
@@ -212,7 +238,7 @@ mod tests {
 
     #[test]
     fn test_100_steps_preserves_norm() {
-        let walk = CoinedWalk1D::<f64>::new(256, Coin::Hadamard);
+        let walk = CoinedWalk1D::<f64>::new(256, Coin::Hadamard).unwrap();
         let mut state = QuantumState::localized(128, 256, 2).unwrap();
 
         for _step in 0..100 {
@@ -226,7 +252,7 @@ mod tests {
     fn test_walk_spreading_pattern() {
         // Quantum walk should show ballistic spreading with two peaks
         let n = 101;
-        let walk = CoinedWalk1D::<f64>::new(n, Coin::Hadamard);
+        let walk = CoinedWalk1D::<f64>::new(n, Coin::Hadamard).unwrap();
 
         // Start in the middle with superposition coin state
         let state = QuantumState::superposition_at(50, n, 2).unwrap();
@@ -242,17 +268,22 @@ mod tests {
         assert_relative_eq!(total_spread, 1.0, epsilon = 1e-10);
 
         // Center should have lost most probability after 30 steps
-        assert!(center_prob < 0.1, "Center probability {} too high", center_prob);
+        assert!(
+            center_prob < 0.1,
+            "Center probability {} too high",
+            center_prob
+        );
 
         // There should be some probability away from center
-        let edge_region: f64 = probs[20..30].iter().sum::<f64>() + probs[70..80].iter().sum::<f64>();
+        let edge_region: f64 =
+            probs[20..30].iter().sum::<f64>() + probs[70..80].iter().sum::<f64>();
         assert!(edge_region > 0.1, "Not enough spreading to edges");
     }
 
     #[test]
     fn test_identity_coin_no_mixing() {
         let n = 16;
-        let walk = CoinedWalk1D::<f64>::new(n, Coin::Identity(2));
+        let walk = CoinedWalk1D::<f64>::new(n, Coin::Identity(2)).unwrap();
 
         // Start at position 8, coin 0
         let state = QuantumState::localized(8, n, 2).unwrap();
@@ -268,7 +299,7 @@ mod tests {
     #[test]
     fn test_walk_periodic_boundary() {
         let n = 16;
-        let walk = CoinedWalk1D::<f64>::new(n, Coin::Identity(2));
+        let walk = CoinedWalk1D::<f64>::new(n, Coin::Identity(2)).unwrap();
 
         // Start at position 2, coin 0 (will shift left)
         let state = QuantumState::localized(2, n, 2).unwrap();
@@ -282,7 +313,7 @@ mod tests {
 
     #[test]
     fn test_simulate_method() {
-        let walk = CoinedWalk1D::<f64>::new(64, Coin::Hadamard);
+        let walk = CoinedWalk1D::<f64>::new(64, Coin::Hadamard).unwrap();
         let initial = QuantumState::localized(32, 64, 2).unwrap();
 
         let final_state = walk.simulate(initial.clone(), 10);
@@ -300,7 +331,7 @@ mod tests {
 
     #[test]
     fn test_coin_accessor() {
-        let walk = CoinedWalk1D::<f64>::new(32, Coin::Hadamard);
+        let walk = CoinedWalk1D::<f64>::new(32, Coin::Hadamard).unwrap();
         assert_eq!(*walk.coin(), Coin::Hadamard);
         assert_eq!(walk.num_positions(), 32);
         assert_eq!(walk.coin_dim(), 2);
@@ -309,7 +340,7 @@ mod tests {
     #[test]
     fn test_grover_coin_walk() {
         let n = 64;
-        let walk = CoinedWalk1D::<f64>::new(n, Coin::Grover(2));
+        let walk = CoinedWalk1D::<f64>::new(n, Coin::Grover(2)).unwrap();
         let state = QuantumState::localized(32, n, 2).unwrap();
 
         let final_state = walk.simulate(state, 20);
@@ -324,7 +355,7 @@ mod tests {
         // H|0⟩ = (|0⟩+|1⟩)/√2, then |0⟩ shifts left, |1⟩ shifts right
         // This creates the characteristic quantum walk asymmetry
         let n = 101;
-        let walk = CoinedWalk1D::<f64>::new(n, Coin::Hadamard);
+        let walk = CoinedWalk1D::<f64>::new(n, Coin::Hadamard).unwrap();
 
         let state = QuantumState::localized(50, n, 2).unwrap();
         let final_state = walk.simulate(state, 20);
@@ -347,13 +378,13 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn test_walk_serialization() {
-        let walk = CoinedWalk1D::<f64>::new(64, Coin::Hadamard);
+        let walk = CoinedWalk1D::<f64>::new(64, Coin::Hadamard).unwrap();
 
         let encoded = bincode::serialize(&walk).unwrap();
         let mut decoded: CoinedWalk1D<f64> = bincode::deserialize(&encoded).unwrap();
 
         // Need to reinitialize after deserialization
-        decoded.ensure_initialized();
+        decoded.ensure_initialized().unwrap();
 
         assert_eq!(decoded.num_positions(), 64);
         assert_eq!(*decoded.coin(), Coin::Hadamard);

@@ -105,7 +105,7 @@ mod physics_props {
             steps in 1_usize..50
         ) {
             let n = 64;
-            let walk = CoinedWalk1D::<f64>::new(n, Coin::Hadamard);
+            let walk = CoinedWalk1D::<f64>::new(n, Coin::Hadamard).unwrap();
             let state = QuantumState::localized(position, n, 2).unwrap();
 
             let final_state = walk.simulate(state, steps);
@@ -120,7 +120,7 @@ mod physics_props {
             steps in 1_usize..30
         ) {
             let n = 64;
-            let walk = CoinedWalk1D::<f64>::new(n, Coin::Hadamard);
+            let walk = CoinedWalk1D::<f64>::new(n, Coin::Hadamard).unwrap();
             let state = QuantumState::localized(position, n, 2).unwrap();
 
             let final_state = walk.simulate(state, steps);

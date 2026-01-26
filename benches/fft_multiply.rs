@@ -110,7 +110,7 @@ fn bench_quantum_walk(c: &mut Criterion) {
     let mut group = c.benchmark_group("quantum_walk");
 
     for size in [64, 128, 256, 512].iter() {
-        let walk = CoinedWalk1D::<f64>::new(*size, Coin::Hadamard);
+        let walk = CoinedWalk1D::<f64>::new(*size, Coin::Hadamard).unwrap();
         let state = QuantumState::localized(*size / 2, *size, 2).unwrap();
 
         group.bench_with_input(BenchmarkId::new("single_step", size), size, |b, _| {

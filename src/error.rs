@@ -47,6 +47,35 @@ pub enum CirculantError {
         /// The valid size.
         size: usize,
     },
+
+    /// Invalid kernel dimensions.
+    #[error("invalid kernel: {0}")]
+    InvalidKernel(String),
+
+    /// Image dimension mismatch.
+    #[error("image dimensions {got:?} incompatible with filter {expected:?}")]
+    ImageDimensionMismatch {
+        /// Expected dimensions.
+        expected: (usize, usize),
+        /// Actual dimensions.
+        got: (usize, usize),
+    },
+
+    /// Hamiltonian is not Hermitian.
+    #[error("Hamiltonian must be Hermitian")]
+    NotHermitian,
+
+    /// Time parameter invalid.
+    #[error("invalid time parameter: {0}")]
+    InvalidTime(String),
+
+    /// Visualization error.
+    #[error("visualization error: {0}")]
+    VisualizationError(String),
+
+    /// Invalid walk parameters.
+    #[error("invalid walk parameters: {0}")]
+    InvalidWalkParameters(String),
 }
 
 /// A specialized Result type for circulant operations.
@@ -86,18 +115,45 @@ mod tests {
             expected: 2,
             got: 3,
         };
-        assert_eq!(
-            err.to_string(),
-            "invalid coin dimension: expected 2, got 3"
-        );
+        assert_eq!(err.to_string(), "invalid coin dimension: expected 2, got 3");
 
         let err = CirculantError::PositionOutOfBounds {
             position: 10,
             size: 5,
         };
+        assert_eq!(err.to_string(), "position 10 out of bounds for size 5");
+
+        let err = CirculantError::InvalidKernel("kernel must be odd-sized".to_string());
+        assert_eq!(err.to_string(), "invalid kernel: kernel must be odd-sized");
+
+        let err = CirculantError::ImageDimensionMismatch {
+            expected: (64, 64),
+            got: (32, 32),
+        };
         assert_eq!(
             err.to_string(),
-            "position 10 out of bounds for size 5"
+            "image dimensions (32, 32) incompatible with filter (64, 64)"
+        );
+
+        let err = CirculantError::NotHermitian;
+        assert_eq!(err.to_string(), "Hamiltonian must be Hermitian");
+
+        let err = CirculantError::InvalidTime("time must be non-negative".to_string());
+        assert_eq!(
+            err.to_string(),
+            "invalid time parameter: time must be non-negative"
+        );
+
+        let err = CirculantError::VisualizationError("failed to create plot".to_string());
+        assert_eq!(
+            err.to_string(),
+            "visualization error: failed to create plot"
+        );
+
+        let err = CirculantError::InvalidWalkParameters("positions must be positive".to_string());
+        assert_eq!(
+            err.to_string(),
+            "invalid walk parameters: positions must be positive"
         );
     }
 

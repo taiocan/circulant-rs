@@ -8,7 +8,7 @@ use circulant_rs::physics::{Coin, CoinedWalk1D, QuantumState, QuantumWalk};
 #[test]
 fn test_quantum_walk_long_evolution() {
     let n = 512;
-    let walk = CoinedWalk1D::<f64>::new(n, Coin::Hadamard);
+    let walk = CoinedWalk1D::<f64>::new(n, Coin::Hadamard).unwrap();
 
     let state = QuantumState::localized(n / 2, n, 2).unwrap();
     let final_state = walk.simulate(state, 200);
@@ -27,7 +27,7 @@ fn test_quantum_walk_different_coins() {
     let n = 64;
 
     for coin in [Coin::Hadamard, Coin::Grover(2), Coin::Dft(2)] {
-        let walk = CoinedWalk1D::<f64>::new(n, coin.clone());
+        let walk = CoinedWalk1D::<f64>::new(n, coin.clone()).unwrap();
         let state = QuantumState::localized(n / 2, n, 2).unwrap();
 
         // Run 50 steps
@@ -43,7 +43,7 @@ fn test_quantum_walk_ballistic_spreading() {
     // Quantum walks exhibit ballistic spreading (linear in time)
     // compared to classical random walks (sqrt of time)
     let n = 201;
-    let walk = CoinedWalk1D::<f64>::new(n, Coin::Hadamard);
+    let walk = CoinedWalk1D::<f64>::new(n, Coin::Hadamard).unwrap();
 
     // Use localized initial state for clearer ballistic spreading
     // Starting with |coin=0⟩ shows asymmetric but ballistic spread
@@ -85,7 +85,7 @@ fn test_quantum_walk_ballistic_spreading() {
 fn test_quantum_walk_localization_with_identity() {
     // Identity coin should produce deterministic evolution
     let n = 32;
-    let walk = CoinedWalk1D::<f64>::new(n, Coin::Identity(2));
+    let walk = CoinedWalk1D::<f64>::new(n, Coin::Identity(2)).unwrap();
 
     // Start with coin 1 (will shift right)
     let state = QuantumState::localized_with_coin(16, 1, n, 2).unwrap();
@@ -130,18 +130,14 @@ fn test_coin_properties() {
     ];
 
     for coin in coins {
-        assert!(
-            coin.is_unitary::<f64>(1e-10),
-            "{:?} is not unitary",
-            coin
-        );
+        assert!(coin.is_unitary::<f64>(1e-10), "{:?} is not unitary", coin);
     }
 }
 
 #[test]
 fn test_probability_conservation_many_steps() {
     let n = 128;
-    let walk = CoinedWalk1D::<f64>::new(n, Coin::Hadamard);
+    let walk = CoinedWalk1D::<f64>::new(n, Coin::Hadamard).unwrap();
     let mut state = QuantumState::superposition_at(64, n, 2).unwrap();
 
     for _step in 0..100 {

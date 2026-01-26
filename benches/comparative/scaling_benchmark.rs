@@ -4,9 +4,7 @@
 
 use circulant_rs::core::{BlockCirculant, Circulant};
 use circulant_rs::traits::{BlockOps, CirculantOps};
-use criterion::{
-    black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput,
-};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use ndarray::Array2;
 use num_complex::Complex;
 
@@ -128,7 +126,7 @@ fn bench_quantum_walk(c: &mut Criterion) {
     for n_positions in [256, 1024, 4096, 16384, 65536] {
         group.throughput(Throughput::Elements(n_positions as u64));
 
-        let walk = CoinedWalk1D::<f64>::new(n_positions, Coin::Hadamard);
+        let walk = CoinedWalk1D::<f64>::new(n_positions, Coin::Hadamard).unwrap();
         let initial = QuantumState::localized(n_positions / 2, n_positions, 2).unwrap();
 
         // Single step benchmark
@@ -148,9 +146,7 @@ fn bench_quantum_walk(c: &mut Criterion) {
         group.bench_with_input(
             BenchmarkId::new("100_steps", n_positions),
             &n_positions,
-            |b, _| {
-                b.iter(|| black_box(walk.simulate(initial.clone(), 100)))
-            },
+            |b, _| b.iter(|| black_box(walk.simulate(initial.clone(), 100))),
         );
     }
 

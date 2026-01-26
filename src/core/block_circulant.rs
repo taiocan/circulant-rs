@@ -90,8 +90,8 @@ impl<T: Scalar + rustfft::FftNum> BlockCirculant<T> {
         // We store it as a 3D array with shape [1, output_rows, output_cols]
         let generator = padded.insert_axis(ndarray::Axis(0));
 
-        let fft_rows = Arc::new(RustFftBackend::new(output_rows));
-        let fft_cols = Arc::new(RustFftBackend::new(output_cols));
+        let fft_rows = Arc::new(RustFftBackend::new(output_rows)?);
+        let fft_cols = Arc::new(RustFftBackend::new(output_cols)?);
 
         Ok(Self {
             generator,
@@ -113,8 +113,8 @@ impl<T: Scalar + rustfft::FftNum> BlockCirculant<T> {
         }
 
         let gen_3d = generator.insert_axis(ndarray::Axis(0));
-        let fft_rows = Arc::new(RustFftBackend::new(rows));
-        let fft_cols = Arc::new(RustFftBackend::new(cols));
+        let fft_rows = Arc::new(RustFftBackend::new(rows)?);
+        let fft_cols = Arc::new(RustFftBackend::new(cols)?);
 
         Ok(Self {
             generator: gen_3d,
@@ -150,8 +150,10 @@ impl<T: Scalar + rustfft::FftNum> BlockCirculant<T> {
     /// Compute the 2D spectrum for multiplication.
     fn compute_spectrum(&self) -> Array2<Complex<T>> {
         let (rows, cols) = self.block_size;
-        let fft_rows = self.fft_rows.as_ref().unwrap();
-        let fft_cols = self.fft_cols.as_ref().unwrap();
+        let (fft_rows, fft_cols) = match (self.fft_rows.as_ref(), self.fft_cols.as_ref()) {
+            (Some(r), Some(c)) => (r, c),
+            _ => return Array2::zeros((rows, cols)),
+        };
 
         // Get the 2D generator (first slice of 3D array)
         let gen_2d = self.generator.slice(ndarray::s![0, .., ..]);
@@ -194,14 +196,19 @@ impl<T: Scalar + rustfft::FftNum> BlockCirculant<T> {
     }
 
     /// Ensure FFT backends are initialized (useful after deserialization).
+    ///
+    /// # Errors
+    ///
+    /// Returns `InvalidFftSize` if initialization fails (should not happen for valid matrices).
     #[allow(dead_code)]
-    pub fn ensure_fft(&mut self) {
+    pub fn ensure_fft(&mut self) -> Result<()> {
         if self.fft_rows.is_none() {
-            self.fft_rows = Some(Arc::new(RustFftBackend::new(self.block_size.0)));
+            self.fft_rows = Some(Arc::new(RustFftBackend::new(self.block_size.0)?));
         }
         if self.fft_cols.is_none() {
-            self.fft_cols = Some(Arc::new(RustFftBackend::new(self.block_size.1)));
+            self.fft_cols = Some(Arc::new(RustFftBackend::new(self.block_size.1)?));
         }
+        Ok(())
     }
 }
 
@@ -216,8 +223,14 @@ impl<T: Scalar + rustfft::FftNum> BlockOps<T> for BlockCirculant<T> {
             });
         }
 
-        let fft_rows = self.fft_rows.as_ref().unwrap();
-        let fft_cols = self.fft_cols.as_ref().unwrap();
+        let (fft_rows, fft_cols) = match (self.fft_rows.as_ref(), self.fft_cols.as_ref()) {
+            (Some(r), Some(c)) => (r, c),
+            _ => {
+                return Err(CirculantError::InvalidBlockStructure(
+                    "FFT not initialized".to_string(),
+                ))
+            }
+        };
 
         // Get eigenvalues
         let spectrum = if let Some(ref cached) = self.cached_spectrum {
@@ -293,7 +306,9 @@ impl<T: Scalar + rustfft::FftNum> BlockOps<T> for BlockCirculant<T> {
         let result_2d = self.mul_array(&x_2d)?;
 
         // Flatten back
-        Ok(result_2d.into_shape_with_order(expected).unwrap())
+        result_2d
+            .into_shape_with_order(expected)
+            .map_err(|_| CirculantError::InvalidBlockStructure("reshape failed".to_string()))
     }
 
     fn eigenvalues_2d(&self) -> Array2<Complex<T>> {
@@ -361,8 +376,8 @@ mod tests {
 
     #[test]
     fn test_block_circulant_from_real() {
-        let gen = Array2::from_shape_vec((3, 3), (1..=9).map(|x| x as f64).collect::<Vec<_>>())
-            .unwrap();
+        let gen =
+            Array2::from_shape_vec((3, 3), (1..=9).map(|x| x as f64).collect::<Vec<_>>()).unwrap();
 
         let bc = BlockCirculant::from_real(gen).unwrap();
         assert_eq!(bc.dimensions(), (1, 3, 3));
@@ -439,8 +454,16 @@ mod tests {
 
         for i in 0..4 {
             for j in 0..4 {
-                assert_relative_eq!(fft_result[(i, j)].re, naive_result[(i, j)].re, epsilon = 1e-10);
-                assert_relative_eq!(fft_result[(i, j)].im, naive_result[(i, j)].im, epsilon = 1e-10);
+                assert_relative_eq!(
+                    fft_result[(i, j)].re,
+                    naive_result[(i, j)].re,
+                    epsilon = 1e-10
+                );
+                assert_relative_eq!(
+                    fft_result[(i, j)].im,
+                    naive_result[(i, j)].im,
+                    epsilon = 1e-10
+                );
             }
         }
     }
@@ -500,8 +523,16 @@ mod tests {
 
         for i in 0..4 {
             for j in 0..4 {
-                assert_relative_eq!(fft_result[(i, j)].re, naive_result[(i, j)].re, epsilon = 1e-9);
-                assert_relative_eq!(fft_result[(i, j)].im, naive_result[(i, j)].im, epsilon = 1e-9);
+                assert_relative_eq!(
+                    fft_result[(i, j)].re,
+                    naive_result[(i, j)].re,
+                    epsilon = 1e-9
+                );
+                assert_relative_eq!(
+                    fft_result[(i, j)].im,
+                    naive_result[(i, j)].im,
+                    epsilon = 1e-9
+                );
             }
         }
     }
@@ -618,6 +649,9 @@ mod tests {
 
         let x = Array2::zeros((3, 3)); // Wrong size
         let result = bc.mul_array(&x);
-        assert!(matches!(result, Err(CirculantError::DimensionMismatch { .. })));
+        assert!(matches!(
+            result,
+            Err(CirculantError::DimensionMismatch { .. })
+        ));
     }
 }

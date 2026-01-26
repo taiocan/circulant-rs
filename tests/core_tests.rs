@@ -71,8 +71,16 @@ fn test_block_circulant_large_size() {
 
     for i in 0..n {
         for j in 0..n {
-            assert_relative_eq!(fft_result[(i, j)].re, naive_result[(i, j)].re, epsilon = 1e-8);
-            assert_relative_eq!(fft_result[(i, j)].im, naive_result[(i, j)].im, epsilon = 1e-8);
+            assert_relative_eq!(
+                fft_result[(i, j)].re,
+                naive_result[(i, j)].re,
+                epsilon = 1e-8
+            );
+            assert_relative_eq!(
+                fft_result[(i, j)].im,
+                naive_result[(i, j)].im,
+                epsilon = 1e-8
+            );
         }
     }
 }

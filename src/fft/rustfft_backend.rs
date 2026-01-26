@@ -1,5 +1,6 @@
 //! RustFFT backend implementation.
 
+use crate::error::{CirculantError, Result};
 use crate::fft::backend::FftBackend;
 use crate::traits::Scalar;
 use num_complex::Complex;
@@ -19,24 +20,28 @@ pub struct RustFftBackend<T: Scalar + rustfft::FftNum> {
 impl<T: Scalar + rustfft::FftNum> RustFftBackend<T> {
     /// Create a new RustFFT backend for the given size.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// Panics if size is 0.
-    pub fn new(size: usize) -> Self {
-        assert!(size > 0, "FFT size must be positive");
+    /// Returns `InvalidFftSize` if size is 0.
+    pub fn new(size: usize) -> Result<Self> {
+        if size == 0 {
+            return Err(CirculantError::InvalidFftSize(0));
+        }
 
         let mut planner = FftPlanner::new();
         let forward = planner.plan_fft_forward(size);
         let inverse = planner.plan_fft_inverse(size);
 
-        let scratch_len = forward.get_inplace_scratch_len().max(inverse.get_inplace_scratch_len());
+        let scratch_len = forward
+            .get_inplace_scratch_len()
+            .max(inverse.get_inplace_scratch_len());
 
-        Self {
+        Ok(Self {
             forward,
             inverse,
             size,
             scratch_len,
-        }
+        })
     }
 }
 
@@ -51,7 +56,7 @@ impl<T: Scalar + rustfft::FftNum> FftBackend<T> for RustFftBackend<T> {
         self.inverse.process_with_scratch(buffer, &mut scratch);
 
         // Normalize by 1/N
-        let scale = T::one() / T::from(self.size).unwrap();
+        let scale = T::one() / T::from(self.size).unwrap_or_else(|| T::one());
         for val in buffer.iter_mut() {
             *val = Complex::new(val.re * scale, val.im * scale);
         }
@@ -78,12 +83,10 @@ mod tests {
 
     #[test]
     fn test_fft_forward_inverse_roundtrip() {
-        let backend = RustFftBackend::<f64>::new(8);
+        let backend = RustFftBackend::<f64>::new(8).unwrap();
 
         // Original signal: [1, 2, 3, 4, 5, 6, 7, 8]
-        let original: Vec<Complex<f64>> = (1..=8)
-            .map(|x| Complex::new(x as f64, 0.0))
-            .collect();
+        let original: Vec<Complex<f64>> = (1..=8).map(|x| Complex::new(x as f64, 0.0)).collect();
 
         let mut buffer = original.clone();
 
@@ -103,7 +106,7 @@ mod tests {
     #[test]
     fn test_fft_known_values() {
         // DFT of [1, 0, 0, 0] should be [1, 1, 1, 1]
-        let backend = RustFftBackend::<f64>::new(4);
+        let backend = RustFftBackend::<f64>::new(4).unwrap();
 
         let mut buffer = vec![
             Complex::new(1.0, 0.0),
@@ -124,7 +127,7 @@ mod tests {
     fn test_fft_known_values_sinusoid() {
         // DFT of a pure sinusoid should have peaks at the frequency bins
         let n = 8;
-        let backend = RustFftBackend::<f64>::new(n);
+        let backend = RustFftBackend::<f64>::new(n).unwrap();
 
         // cos(2*pi*k/N) for k=0..N-1, with frequency 1
         let mut buffer: Vec<Complex<f64>> = (0..n)
@@ -152,7 +155,7 @@ mod tests {
 
     #[test]
     fn test_fft_linearity() {
-        let backend = RustFftBackend::<f64>::new(4);
+        let backend = RustFftBackend::<f64>::new(4).unwrap();
 
         let x: Vec<Complex<f64>> = vec![
             Complex::new(1.0, 0.0),
@@ -201,19 +204,22 @@ mod tests {
 
     #[test]
     fn test_fft_size() {
-        let backend = RustFftBackend::<f64>::new(16);
+        let backend = RustFftBackend::<f64>::new(16).unwrap();
         assert_eq!(backend.size(), 16);
     }
 
     #[test]
-    #[should_panic(expected = "FFT size must be positive")]
-    fn test_fft_zero_size_panics() {
-        let _ = RustFftBackend::<f64>::new(0);
+    fn test_fft_zero_size_returns_error() {
+        let result = RustFftBackend::<f64>::new(0);
+        assert!(matches!(
+            result,
+            Err(crate::error::CirculantError::InvalidFftSize(0))
+        ));
     }
 
     #[test]
     fn test_fft_f32() {
-        let backend = RustFftBackend::<f32>::new(4);
+        let backend = RustFftBackend::<f32>::new(4).unwrap();
 
         let original: Vec<Complex<f32>> = vec![
             Complex::new(1.0, 0.0),

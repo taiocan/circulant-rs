@@ -51,7 +51,7 @@ impl<T: Scalar + rustfft::FftNum> Circulant<T> {
             return Err(CirculantError::EmptyGenerator);
         }
 
-        let fft = Arc::new(RustFftBackend::new(generator.len()));
+        let fft = Arc::new(RustFftBackend::new(generator.len())?);
 
         Ok(Self {
             generator,
@@ -135,11 +135,36 @@ impl<T: Scalar + rustfft::FftNum> Circulant<T> {
     }
 
     /// Ensure FFT backend is initialized (useful after deserialization).
+    ///
+    /// # Errors
+    ///
+    /// Returns `InvalidFftSize` if initialization fails (should not happen for valid circulants).
     #[allow(dead_code)]
-    pub fn ensure_fft(&mut self) {
+    pub fn ensure_fft(&mut self) -> Result<()> {
         if self.fft.is_none() {
-            self.fft = Some(Arc::new(RustFftBackend::new(self.generator.len())));
+            self.fft = Some(Arc::new(RustFftBackend::new(self.generator.len())?));
         }
+        Ok(())
+    }
+
+    /// Compute eigenvalues using naive O(N²) DFT (fallback method).
+    fn compute_eigenvalues_naive(&self) -> Vec<Complex<T>> {
+        let n = self.generator.len();
+        let mut spectrum = vec![Complex::new(T::zero(), T::zero()); n];
+
+        for (k, spec_k) in spectrum.iter_mut().enumerate() {
+            let mut sum = Complex::new(T::zero(), T::zero());
+            for j in 0..n {
+                // Eigenvalue: λ_k = Σ_j c[j] * e^(2πijk/n) with positive exponent
+                let theta = T::from(2.0 * std::f64::consts::PI * (k * j) as f64 / n as f64)
+                    .unwrap_or_else(T::zero);
+                let omega = Complex::new(theta.cos(), theta.sin());
+                sum += self.generator[j] * omega;
+            }
+            *spec_k = sum;
+        }
+
+        spectrum
     }
 }
 
@@ -154,12 +179,11 @@ impl<T: Scalar + rustfft::FftNum> CirculantOps<T> for Circulant<T> {
             });
         }
 
-        // Get FFT backend
-        let fft = self
-            .fft
-            .as_ref()
-            .map(|f| f.clone())
-            .unwrap_or_else(|| Arc::new(RustFftBackend::new(n)));
+        // Get FFT backend (create if needed - size is valid since generator is non-empty)
+        let fft = match self.fft.as_ref() {
+            Some(f) => f.clone(),
+            None => Arc::new(RustFftBackend::new(n)?),
+        };
 
         // Get spectrum for multiplication
         // Circulant multiply Cx = c' * x where c' is c with reversed tail
@@ -196,10 +220,7 @@ impl<T: Scalar + rustfft::FftNum> CirculantOps<T> for Circulant<T> {
     }
 
     fn mul_vec_real(&self, x: &[T]) -> Result<Vec<Complex<T>>> {
-        let complex_x: Vec<Complex<T>> = x
-            .iter()
-            .map(|&v| Complex::new(v, T::zero()))
-            .collect();
+        let complex_x: Vec<Complex<T>> = x.iter().map(|&v| Complex::new(v, T::zero())).collect();
         self.mul_vec(&complex_x)
     }
 
@@ -212,11 +233,18 @@ impl<T: Scalar + rustfft::FftNum> CirculantOps<T> for Circulant<T> {
         }
 
         let n = self.generator.len();
-        let fft = self
-            .fft
-            .as_ref()
-            .map(|f| f.clone())
-            .unwrap_or_else(|| Arc::new(RustFftBackend::new(n)));
+
+        // Get FFT backend (create if needed - size is valid since generator is non-empty)
+        let fft = match self.fft.as_ref() {
+            Some(f) => f.clone(),
+            None => match RustFftBackend::new(n) {
+                Ok(f) => Arc::new(f),
+                Err(_) => {
+                    // Fallback: compute DFT manually (shouldn't happen for valid circulants)
+                    return self.compute_eigenvalues_naive();
+                }
+            },
+        };
 
         // Conjugate generator, FFT, conjugate result
         let mut spectrum: Vec<Complex<T>> = self
@@ -457,7 +485,10 @@ mod tests {
         let result = c.mul_vec(&x);
         assert!(matches!(
             result,
-            Err(CirculantError::DimensionMismatch { expected: 4, got: 2 })
+            Err(CirculantError::DimensionMismatch {
+                expected: 4,
+                got: 2
+            })
         ));
     }
 

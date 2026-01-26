@@ -47,6 +47,52 @@ impl Coin {
         }
     }
 
+    /// Create a 4D Grover diffusion operator for 2D walks.
+    ///
+    /// The 4D Grover coin is the standard choice for 2D quantum walks,
+    /// creating symmetric spreading in all four directions.
+    pub fn grover_4d() -> Self {
+        Coin::Grover(4)
+    }
+
+    /// Create a 4D DFT coin for 2D walks.
+    ///
+    /// The DFT coin creates different interference patterns compared to Grover.
+    pub fn dft_4d() -> Self {
+        Coin::Dft(4)
+    }
+
+    /// Create a 4D Hadamard coin (tensor product H ⊗ H).
+    ///
+    /// This is the tensor product of two 2D Hadamard matrices,
+    /// useful for 2D walks that factorize into independent x and y components.
+    pub fn hadamard_4d() -> Self {
+        let h = FRAC_1_SQRT_2;
+        // H ⊗ H = (1/2) [[1,1,1,1], [1,-1,1,-1], [1,1,-1,-1], [1,-1,-1,1]]
+        let half = h * h; // 1/2
+        let data = vec![
+            Complex::new(half, 0.0),
+            Complex::new(half, 0.0),
+            Complex::new(half, 0.0),
+            Complex::new(half, 0.0),
+            Complex::new(half, 0.0),
+            Complex::new(-half, 0.0),
+            Complex::new(half, 0.0),
+            Complex::new(-half, 0.0),
+            Complex::new(half, 0.0),
+            Complex::new(half, 0.0),
+            Complex::new(-half, 0.0),
+            Complex::new(-half, 0.0),
+            Complex::new(half, 0.0),
+            Complex::new(-half, 0.0),
+            Complex::new(-half, 0.0),
+            Complex::new(half, 0.0),
+        ];
+        // Shape is always valid for 16-element 4x4 matrix
+        let matrix = Array2::from_shape_vec((4, 4), data).unwrap_or_else(|_| Array2::eye(4));
+        Coin::Custom(matrix)
+    }
+
     /// Convert the coin to a unitary matrix.
     pub fn to_matrix<T: Scalar>(&self) -> Array2<Complex<T>> {
         match self {
@@ -54,12 +100,17 @@ impl Coin {
             Coin::Grover(d) => self.grover_matrix(*d),
             Coin::Dft(d) => self.dft_matrix(*d),
             Coin::Identity(d) => self.identity_matrix(*d),
-            Coin::Custom(m) => m.mapv(|c| Complex::new(T::from(c.re).unwrap(), T::from(c.im).unwrap())),
+            Coin::Custom(m) => m.mapv(|c| {
+                Complex::new(
+                    T::from(c.re).unwrap_or_else(T::zero),
+                    T::from(c.im).unwrap_or_else(T::zero),
+                )
+            }),
         }
     }
 
     fn hadamard_matrix<T: Scalar>(&self) -> Array2<Complex<T>> {
-        let h = T::from(FRAC_1_SQRT_2).unwrap();
+        let h = T::from(FRAC_1_SQRT_2).unwrap_or_else(T::zero);
         Array2::from_shape_vec(
             (2, 2),
             vec![
@@ -69,11 +120,11 @@ impl Coin {
                 Complex::new(-h, T::zero()),
             ],
         )
-        .unwrap()
+        .unwrap_or_else(|_| Array2::eye(2))
     }
 
     fn grover_matrix<T: Scalar>(&self, d: usize) -> Array2<Complex<T>> {
-        let two_over_d = T::from(2.0).unwrap() / T::from(d).unwrap();
+        let two_over_d = T::from(2.0).unwrap_or_else(T::zero) / T::from(d).unwrap_or_else(T::one);
         let mut matrix = Array2::zeros((d, d));
 
         for i in 0..d {
@@ -90,12 +141,12 @@ impl Coin {
     }
 
     fn dft_matrix<T: Scalar>(&self, d: usize) -> Array2<Complex<T>> {
-        let norm = T::one() / T::from(d).unwrap().sqrt();
+        let norm = T::one() / T::from(d).unwrap_or_else(T::one).sqrt();
         let mut matrix = Array2::zeros((d, d));
 
         for j in 0..d {
             for k in 0..d {
-                let theta = T::from(2.0 * PI * (j * k) as f64 / d as f64).unwrap();
+                let theta = T::from(2.0 * PI * (j * k) as f64 / d as f64).unwrap_or_else(T::zero);
                 matrix[(j, k)] = Complex::new(norm * theta.cos(), norm * theta.sin());
             }
         }
@@ -152,7 +203,11 @@ mod tests {
     fn test_grover_is_unitary() {
         for d in 2..=5 {
             let coin = Coin::Grover(d);
-            assert!(coin.is_unitary::<f64>(1e-10), "Grover({}) is not unitary", d);
+            assert!(
+                coin.is_unitary::<f64>(1e-10),
+                "Grover({}) is not unitary",
+                d
+            );
         }
     }
 
@@ -221,7 +276,42 @@ mod tests {
         assert_eq!(Coin::Identity(5).dimension(), 5);
 
         let custom = Array2::eye(3);
-        assert_eq!(Coin::Custom(custom.mapv(|x| Complex::new(x, 0.0))).dimension(), 3);
+        assert_eq!(
+            Coin::Custom(custom.mapv(|x| Complex::new(x, 0.0))).dimension(),
+            3
+        );
+    }
+
+    #[test]
+    fn test_4d_coins_are_unitary() {
+        let coins = [Coin::grover_4d(), Coin::dft_4d(), Coin::hadamard_4d()];
+        for coin in coins {
+            assert!(
+                coin.is_unitary::<f64>(1e-10),
+                "4D coin {} should be unitary",
+                coin.dimension()
+            );
+        }
+    }
+
+    #[test]
+    fn test_hadamard_4d_dimension() {
+        let coin = Coin::hadamard_4d();
+        assert_eq!(coin.dimension(), 4);
+    }
+
+    #[test]
+    fn test_hadamard_4d_tensor_product_structure() {
+        // H⊗H|00⟩ = |++⟩ = (|00⟩+|01⟩+|10⟩+|11⟩)/2
+        let coin = Coin::hadamard_4d();
+        let matrix = coin.to_matrix::<f64>();
+
+        // First column should be [1/2, 1/2, 1/2, 1/2]
+        let half = 0.5;
+        for i in 0..4 {
+            assert_relative_eq!(matrix[(i, 0)].re, half, epsilon = 1e-10);
+            assert_relative_eq!(matrix[(i, 0)].im, 0.0, epsilon = 1e-10);
+        }
     }
 
     #[test]

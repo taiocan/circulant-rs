@@ -2,7 +2,7 @@
 
 use crate::error::{CirculantError, Result};
 use crate::traits::Scalar;
-use ndarray::Array1;
+use ndarray::{Array1, Array2};
 use num_complex::Complex;
 
 #[cfg(feature = "serde")]
@@ -115,7 +115,11 @@ impl<T: Scalar> QuantumState<T> {
     }
 
     /// Create a state that's an equal superposition of coin states at one position.
-    pub fn superposition_at(position: usize, num_positions: usize, coin_dim: usize) -> Result<Self> {
+    pub fn superposition_at(
+        position: usize,
+        num_positions: usize,
+        coin_dim: usize,
+    ) -> Result<Self> {
         if position >= num_positions {
             return Err(CirculantError::PositionOutOfBounds {
                 position,
@@ -127,7 +131,7 @@ impl<T: Scalar> QuantumState<T> {
         let mut amplitudes = Array1::zeros(total_dim);
 
         // Equal superposition over all coin states at this position
-        let norm = T::one() / T::from(coin_dim).unwrap().sqrt();
+        let norm = T::one() / T::from(coin_dim).unwrap_or_else(T::one).sqrt();
         for c in 0..coin_dim {
             amplitudes[position * coin_dim + c] = Complex::new(norm, T::zero());
         }
@@ -208,6 +212,130 @@ impl<T: Scalar> QuantumState<T> {
     /// Set the amplitude at (position, coin_state).
     pub fn set(&mut self, position: usize, coin_state: usize, value: Complex<T>) {
         self.amplitudes[position * self.coin_dim + coin_state] = value;
+    }
+
+    /// Convert 2D coordinates to a linear index.
+    ///
+    /// Uses row-major ordering: index = row * cols + col
+    #[inline]
+    pub fn index_2d(row: usize, col: usize, cols: usize) -> usize {
+        row * cols + col
+    }
+
+    /// Create a localized state at a 2D position (row, col) with coin state |0⟩.
+    ///
+    /// For 2D walks, the position space is a rows × cols torus (periodic boundaries).
+    /// The coin dimension is typically 4 for 4-direction walks.
+    ///
+    /// # Arguments
+    ///
+    /// * `row` - Row position (0 to rows-1)
+    /// * `col` - Column position (0 to cols-1)
+    /// * `rows` - Number of rows in the lattice
+    /// * `cols` - Number of columns in the lattice
+    /// * `coin_dim` - Dimension of coin space (typically 4 for 2D walks)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if row >= rows or col >= cols.
+    pub fn localized_2d(
+        row: usize,
+        col: usize,
+        rows: usize,
+        cols: usize,
+        coin_dim: usize,
+    ) -> Result<Self> {
+        if row >= rows || col >= cols {
+            return Err(CirculantError::PositionOutOfBounds {
+                position: row * cols + col,
+                size: rows * cols,
+            });
+        }
+
+        let num_positions = rows * cols;
+        let total_dim = num_positions * coin_dim;
+        let mut amplitudes = Array1::zeros(total_dim);
+
+        let pos = Self::index_2d(row, col, cols);
+        amplitudes[pos * coin_dim] = Complex::new(T::one(), T::zero());
+
+        Ok(Self {
+            amplitudes,
+            num_positions,
+            coin_dim,
+        })
+    }
+
+    /// Create a 2D superposition state at a specific position.
+    ///
+    /// Creates an equal superposition over all coin states at the given position.
+    pub fn superposition_2d(
+        row: usize,
+        col: usize,
+        rows: usize,
+        cols: usize,
+        coin_dim: usize,
+    ) -> Result<Self> {
+        if row >= rows || col >= cols {
+            return Err(CirculantError::PositionOutOfBounds {
+                position: row * cols + col,
+                size: rows * cols,
+            });
+        }
+
+        let num_positions = rows * cols;
+        let total_dim = num_positions * coin_dim;
+        let mut amplitudes = Array1::zeros(total_dim);
+
+        let pos = Self::index_2d(row, col, cols);
+        let norm = T::one() / T::from(coin_dim).unwrap_or_else(T::one).sqrt();
+        for c in 0..coin_dim {
+            amplitudes[pos * coin_dim + c] = Complex::new(norm, T::zero());
+        }
+
+        Ok(Self {
+            amplitudes,
+            num_positions,
+            coin_dim,
+        })
+    }
+
+    /// Extract the 2D probability distribution over positions.
+    ///
+    /// Returns a 2D array of shape (rows, cols) where each element is
+    /// the probability of finding the walker at that position (summed over coin states).
+    ///
+    /// # Arguments
+    ///
+    /// * `rows` - Number of rows in the lattice
+    /// * `cols` - Number of columns in the lattice
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if rows * cols doesn't match num_positions.
+    pub fn position_probabilities_2d(&self, rows: usize, cols: usize) -> Result<Array2<T>> {
+        if rows * cols != self.num_positions {
+            return Err(CirculantError::DimensionMismatch {
+                expected: self.num_positions,
+                got: rows * cols,
+            });
+        }
+
+        let mut probs = Array2::zeros((rows, cols));
+
+        for row in 0..rows {
+            for col in 0..cols {
+                let pos = Self::index_2d(row, col, cols);
+                let mut prob = T::zero();
+                for c in 0..self.coin_dim {
+                    let amp = self.amplitudes[pos * self.coin_dim + c];
+                    prob = prob + amp.re * amp.re + amp.im * amp.im;
+                }
+                probs[[row, col]] = prob;
+            }
+        }
+
+        Ok(probs)
     }
 }
 
@@ -295,7 +423,10 @@ mod tests {
         let result = QuantumState::<f64>::new(amplitudes, 10, 2);
         assert!(matches!(
             result,
-            Err(CirculantError::DimensionMismatch { expected: 20, got: 10 })
+            Err(CirculantError::DimensionMismatch {
+                expected: 20,
+                got: 10
+            })
         ));
     }
 
@@ -304,7 +435,10 @@ mod tests {
         let result = QuantumState::<f64>::localized(15, 10, 2);
         assert!(matches!(
             result,
-            Err(CirculantError::PositionOutOfBounds { position: 15, size: 10 })
+            Err(CirculantError::PositionOutOfBounds {
+                position: 15,
+                size: 10
+            })
         ));
     }
 
@@ -327,5 +461,75 @@ mod tests {
         assert_eq!(decoded.num_positions(), 10);
         assert_eq!(decoded.coin_dim(), 2);
         assert_relative_eq!(decoded.norm_squared(), 1.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_index_2d() {
+        assert_eq!(QuantumState::<f64>::index_2d(0, 0, 10), 0);
+        assert_eq!(QuantumState::<f64>::index_2d(0, 5, 10), 5);
+        assert_eq!(QuantumState::<f64>::index_2d(1, 0, 10), 10);
+        assert_eq!(QuantumState::<f64>::index_2d(2, 3, 10), 23);
+    }
+
+    #[test]
+    fn test_localized_2d_correct_indexing() {
+        let state = QuantumState::<f64>::localized_2d(5, 5, 10, 10, 4).unwrap();
+        assert_eq!(state.num_positions(), 100);
+        assert_eq!(state.coin_dim(), 4);
+        assert_relative_eq!(state.norm_squared(), 1.0, epsilon = 1e-10);
+
+        // Position 5,5 = index 55. Amplitude at (55, coin 0) should be 1.
+        let pos = QuantumState::<f64>::index_2d(5, 5, 10);
+        assert_eq!(state.get(pos, 0), Complex::new(1.0, 0.0));
+        assert_eq!(state.get(pos, 1), Complex::new(0.0, 0.0));
+    }
+
+    #[test]
+    fn test_localized_2d_out_of_bounds() {
+        let result = QuantumState::<f64>::localized_2d(10, 5, 10, 10, 4);
+        assert!(result.is_err());
+
+        let result = QuantumState::<f64>::localized_2d(5, 10, 10, 10, 4);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_superposition_2d_normalized() {
+        let state = QuantumState::<f64>::superposition_2d(5, 5, 10, 10, 4).unwrap();
+        assert_relative_eq!(state.norm_squared(), 1.0, epsilon = 1e-10);
+
+        let pos = QuantumState::<f64>::index_2d(5, 5, 10);
+        // Each coin state should have equal amplitude
+        let expected_amp = 0.5; // 1/sqrt(4) = 0.5
+        for c in 0..4 {
+            assert_relative_eq!(state.get(pos, c).re, expected_amp, epsilon = 1e-10);
+        }
+    }
+
+    #[test]
+    fn test_position_probabilities_2d() {
+        let state = QuantumState::<f64>::localized_2d(3, 4, 8, 8, 4).unwrap();
+        let probs = state.position_probabilities_2d(8, 8).unwrap();
+
+        assert_eq!(probs.dim(), (8, 8));
+
+        // Only position (3, 4) should have probability 1
+        assert_relative_eq!(probs[[3, 4]], 1.0, epsilon = 1e-10);
+
+        // All other positions should be 0
+        for i in 0..8 {
+            for j in 0..8 {
+                if i != 3 || j != 4 {
+                    assert_relative_eq!(probs[[i, j]], 0.0, epsilon = 1e-10);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_position_probabilities_2d_dimension_mismatch() {
+        let state = QuantumState::<f64>::localized_2d(5, 5, 10, 10, 4).unwrap();
+        let result = state.position_probabilities_2d(8, 8);
+        assert!(result.is_err());
     }
 }

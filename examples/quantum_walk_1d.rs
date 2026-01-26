@@ -16,7 +16,8 @@ fn main() {
     let num_steps = 30;
 
     // Create the quantum walk with Hadamard coin
-    let walk = CoinedWalk1D::<f64>::new(num_positions, Coin::Hadamard);
+    let walk = CoinedWalk1D::<f64>::new(num_positions, Coin::Hadamard)
+        .expect("Failed to create quantum walk");
 
     // Create initial state: superposition of coin states at center
     // This gives symmetric evolution
@@ -58,11 +59,7 @@ fn main() {
     println!("{}", "=".repeat(60));
 
     // Statistics
-    let mean: f64 = probs
-        .iter()
-        .enumerate()
-        .map(|(i, &p)| i as f64 * p)
-        .sum();
+    let mean: f64 = probs.iter().enumerate().map(|(i, &p)| i as f64 * p).sum();
 
     let variance: f64 = probs
         .iter()
@@ -80,8 +77,7 @@ fn main() {
     println!("  Std deviation: {:.2}", std_dev);
     println!(
         "  Ballistic spread: {:.2} (≈ steps = {})",
-        std_dev,
-        num_steps
+        std_dev, num_steps
     );
 
     // Compare with classical random walk (diffusive: std ≈ sqrt(t))
