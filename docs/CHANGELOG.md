@@ -1,6 +1,6 @@
 # Changelog
 
-**Version:** 0.1.0 | **Updated:** 2024-01-26 | **Reading time:** 2 min
+**Version:** 0.2.0 | **Updated:** 2026-01-27 | **Reading time:** 2 min
 
 > All notable changes to circulant-rs.
 
@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.1.0] - 2024-01-26
+## [0.2.0] - 2026-01-27
 
 ### Added
 

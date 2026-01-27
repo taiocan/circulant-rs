@@ -1,6 +1,6 @@
 # Whitepaper: circulant-rs
 
-**Version:** 0.1.0 | **Updated:** 2024-01-26 | **Reading time:** 5 min
+**Version:** 0.2.0 | **Updated:** 2026-01-27 | **Reading time:** 5 min
 
 > Mathematical foundations of high-performance matrix operations for quantum simulation and signal processing.
 

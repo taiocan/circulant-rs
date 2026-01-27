@@ -1,6 +1,6 @@
 # circulant-rs: O(N log N) Matrix Operations with 99.999% Memory Reduction
 
-**Version:** 0.1.0 | **Updated:** 2024-01-26 | **Reading time:** 10 min
+**Version:** 0.2.0 | **Updated:** 2026-01-27 | **Reading time:** 10 min
 
 > Transform trillion-element matrix problems into millisecond computations.
 

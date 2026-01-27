@@ -1,6 +1,6 @@
 # circulant-rs User Guide
 
-**Version:** 0.1.0 | **Updated:** 2024-01-26 | **Reading time:** 20 min
+**Version:** 0.2.0 | **Updated:** 2026-01-27 | **Reading time:** 20 min
 
 > Comprehensive guide to circulant-rs for matrix operations, quantum walks, and image processing.
 

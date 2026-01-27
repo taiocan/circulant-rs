@@ -1,6 +1,6 @@
 # Benchmarks
 
-**Version:** 0.1.0 | **Updated:** 2024-01-26 | **Reading time:** 15 min
+**Version:** 0.2.0 | **Updated:** 2026-01-27 | **Reading time:** 15 min
 
 > Performance validation methodology and results for circulant-rs.
 
@@ -261,7 +261,7 @@ OS:  [e.g., macOS 14]
 | Rust | 1.75+ | Release build, LTO enabled |
 | Python | 3.11+ | With NumPy 1.26+, SciPy 1.12+ |
 | Julia | 1.10+ | With FFTW.jl |
-| circulant-rs | 0.1.0 | All features enabled |
+| circulant-rs | 0.2.0 | All features enabled |
 
 ### Build Configuration
 

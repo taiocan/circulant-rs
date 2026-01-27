@@ -1,6 +1,6 @@
 # circulant-rs
 
-**Version:** 0.1.0 | **Updated:** 2024-01-26 | **Reading time:** 5 min
+**Version:** 0.2.0 | **Updated:** 2026-01-27 | **Reading time:** 5 min
 
 A high-performance Rust library for block-circulant matrix operations and quantum walk simulations.
 
@@ -61,7 +61,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-circulant-rs = "0.1"
+circulant-rs = "0.2"
 ```
 
 ### Feature Flags
@@ -72,6 +72,11 @@ circulant-rs = "0.1"
 | `physics` | Yes | Quantum walk simulation module |
 | `parallel` | Yes | Rayon-based parallelization |
 | `serde` | Yes | Serialization with serde/bincode |
+| `vision` | No | Image processing with BCCB filters |
+| `visualize` | No | Visualization with plotters |
+| `visualize-svg` | No | SVG output backend |
+| `visualize-bitmap` | No | PNG/bitmap output backend |
+| `python` | No | Python bindings via PyO3 |
 
 ## Quick Start
 
@@ -248,7 +253,10 @@ See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for detailed technical documentati
 | `core` | `Circulant<T>` and `BlockCirculant<T>` types |
 | `fft` | FFT backend trait and RustFFT implementation |
 | `traits` | `Scalar`, `CirculantOps`, `BlockOps` traits |
-| `physics` | Quantum state, coins, and walk simulation |
+| `physics` | Quantum state, coins, 1D/2D walks, Hamiltonian |
+| `vision` | BCCB image filtering and kernels |
+| `visualize` | Quantum state and heatmap plotting |
+| `python` | PyO3 bindings for Python |
 | `error` | Error types and Result alias |
 | `prelude` | Convenient re-exports |
 
@@ -325,20 +333,19 @@ For detailed methodology, see [docs/BENCHMARKS.md](./docs/BENCHMARKS.md).
 
 ## Roadmap
 
-### v0.1.0 (Current)
+### v0.2.0 (Current)
 - [x] 1D Circulant with FFT multiplication
 - [x] 2D Block Circulant (BCCB)
 - [x] Quantum walk simulation (1D coined walks)
 - [x] Serde serialization
 - [x] Rayon parallelization
+- [x] Vision module (image filtering with BCCB)
+- [x] 2D quantum walks on torus
+- [x] Continuous-time walks (Hamiltonian module)
+- [x] Visualization with plotters
+- [x] Python bindings via PyO3
 
-### v0.2.0 (Planned)
-- [ ] Vision module (image filtering with BCCB)
-- [ ] 2D quantum walks on torus
-- [ ] Hamiltonian module for physics
-- [ ] Visualization with plotters
-
-### v0.3.0 (Future)
+### v0.3.0 (Planned)
 - [ ] GPU acceleration (wgpu/cuda)
 - [ ] N-dimensional circulant tensors
 - [ ] Circulant neural network layers
