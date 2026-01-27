@@ -11,6 +11,9 @@ documentation = "https://docs.rs/circulant-rs"
 keywords = ["fft", "circulant", "matrix", "quantum", "physics"]
 categories = ["algorithms", "mathematics", "science"]
 
+[package.metadata.docs.rs]
+all-features = true
+
 [features]
 default = ["std", "physics", "parallel", "serde"]
 std = []
