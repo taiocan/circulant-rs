@@ -1,6 +1,6 @@
 [package]
 name = "circulant-rs"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 description = "High-performance block-circulant matrix operations using FFT"
 license = "MIT OR Apache-2.0"
