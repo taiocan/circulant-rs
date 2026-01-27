@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "circulant-rs"
-version = "0.2.0"
+version = "0.2.2"
 description = "High-performance block-circulant matrix operations for quantum walks and signal processing"
 readme = "README.md"
 license = { text = "MIT OR Apache-2.0" }
