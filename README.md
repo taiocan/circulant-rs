@@ -86,7 +86,7 @@ circulant-rs = "0.2"
 use circulant_rs::prelude::*;
 use num_complex::Complex;
 
-fn main() -> Result<(), CirculantError> {
+fn main() -> Result<()> {
     // Create a circulant matrix from its first row
     let generator = vec![1.0, 2.0, 3.0, 4.0];
     let matrix = Circulant::from_real(generator)?;
@@ -108,24 +108,25 @@ fn main() -> Result<(), CirculantError> {
 ### Quantum Walk Simulation
 
 ```rust
-use circulant_rs::physics::{CoinedWalk1D, Coin, QuantumState, QuantumWalk};
+use circulant_rs::prelude::*;
 
-fn main() {
+fn main() -> Result<()> {
     // Create a quantum walk on a 256-node ring with Hadamard coin
-    let walk = CoinedWalk1D::<f64>::new(256, Coin::Hadamard);
+    let walk = CoinedWalk1D::<f64>::new(256, Coin::Hadamard)?;
 
     // Initialize walker at position 128
-    let initial_state = QuantumState::localized(128, 256, 2).unwrap();
+    let initial_state = QuantumState::localized(128, 256, 2)?;
 
     // Simulate 100 steps
     let final_state = walk.simulate(initial_state, 100);
 
     // Get probability distribution
-    let probabilities = final_state.position_probabilities();
+    let _probabilities = final_state.position_probabilities();
 
     // Quantum walks show ballistic spreading (linear in time)
     // compared to classical random walks (sqrt of time)
     println!("Norm preserved: {}", final_state.norm_squared());
+    Ok(())
 }
 ```
 

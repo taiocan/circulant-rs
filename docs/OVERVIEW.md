@@ -54,7 +54,7 @@ N=1,000,000 positions feasible
 
 ```rust
 // What takes scipy 16+ GB of RAM and minutes...
-let walk = CoinedWalk1D::new(1_000_000, Coin::Hadamard);
+let walk = CoinedWalk1D::new(1_000_000, Coin::Hadamard)?;
 let state = walk.simulate(initial, 1000);
 // ...runs in seconds with < 100 MB in circulant-rs
 ```
@@ -186,10 +186,10 @@ The `physics` module provides first-class support for quantum walk simulation:
 use circulant_rs::physics::*;
 
 // Create a discrete-time quantum walk
-let walk = CoinedWalk1D::<f64>::new(1024, Coin::Hadamard);
+let walk = CoinedWalk1D::<f64>::new(1024, Coin::Hadamard)?;
 
 // Initialize localized walker
-let psi = QuantumState::localized(512, 1024, 2).unwrap();
+let psi = QuantumState::localized(512, 1024, 2)?;
 
 // Simulate 500 steps—unitarity guaranteed
 let final_state = walk.simulate(psi, 500);
@@ -231,19 +231,27 @@ Features:
 
 ```rust
 use circulant_rs::physics::*;
+use ndarray::Array2;
+use num_complex::Complex;
 use rayon::prelude::*;
 
 // Parameter sweep over coin angles
 let angles: Vec<f64> = (0..360).map(|d| d as f64 * PI / 180.0).collect();
 
 let results: Vec<_> = angles.par_iter().map(|&theta| {
-    let coin = Coin::rotation_y(theta);  // Custom coin
-    let walk = CoinedWalk1D::new(50_000, coin);
-    let state = QuantumState::localized(25_000, 50_000, 2).unwrap();
+    // Create rotation coin: Ry(θ) = [[cos(θ/2), -sin(θ/2)], [sin(θ/2), cos(θ/2)]]
+    let (s, c) = (theta / 2.0).sin_cos();
+    let matrix = Array2::from_shape_vec((2, 2), vec![
+        Complex::new(c, 0.0), Complex::new(-s, 0.0),
+        Complex::new(s, 0.0), Complex::new(c, 0.0),
+    ]).unwrap();
+    let coin = Coin::Custom(matrix);
+    let walk = CoinedWalk1D::new(50_000, coin)?;
+    let state = QuantumState::localized(25_000, 50_000, 2)?;
     let final_state = walk.simulate(state, 1000);
 
     // Compute observable (e.g., variance)
-    compute_variance(&final_state.position_probabilities())
+    Ok(compute_variance(&final_state.position_probabilities()))
 }).collect();
 ```
 
@@ -313,9 +321,7 @@ let blurred_b = filter.mul_array(&image_b)?;
 
 | Limitation | Impact | Mitigation | Roadmap |
 |------------|--------|------------|---------|
-| **1D quantum walks only** | Cannot simulate 2D lattices | Use BlockCirculant for 2D convolution | 2D walks in v0.2.0 |
 | **No GPU acceleration** | CPU-bound for extreme scales | Rayon parallelization helps | GPU backend in v0.3.0 |
-| **No visualization** | Must export data for plotting | Works with any plotting library | Plotters integration planned |
 | **f32/f64 only** | No arbitrary precision | Sufficient for most physics | Extended precision on request |
 | **New library** | Limited production track record | Comprehensive test suite | Community feedback welcome |
 
@@ -398,20 +404,20 @@ We welcome input on prioritization. Open an issue to vote for features or propos
 
 ```toml
 [dependencies]
-circulant-rs = "0.1"
+circulant-rs = "0.2"
 ```
 
 ### 60-Second Example
 
 ```rust
-use circulant_rs::physics::{CoinedWalk1D, Coin, QuantumState, QuantumWalk};
+use circulant_rs::prelude::*;
 
-fn main() {
+fn main() -> Result<()> {
     // Quantum walk on 1024-node ring
-    let walk = CoinedWalk1D::<f64>::new(1024, Coin::Hadamard);
+    let walk = CoinedWalk1D::<f64>::new(1024, Coin::Hadamard)?;
 
     // Start in the middle
-    let initial = QuantumState::localized(512, 1024, 2).unwrap();
+    let initial = QuantumState::localized(512, 1024, 2)?;
 
     // Evolve 100 steps
     let final_state = walk.simulate(initial, 100);
@@ -420,6 +426,7 @@ fn main() {
     let probs = final_state.position_probabilities();
     println!("Probability at origin: {:.6}", probs[512]);
     println!("Total probability: {:.10}", probs.iter().sum::<f64>());
+    Ok(())
 }
 ```
 

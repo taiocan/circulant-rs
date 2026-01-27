@@ -275,11 +275,11 @@ cargo run --example manual_test --features "physics parallel serde"
 ### Test 2: Verify Quantum Walk Norm Preservation
 
 ```rust
-use circulant_rs::physics::*;
+use circulant_rs::prelude::*;
 
-fn main() {
-    let walk = CoinedWalk1D::<f64>::new(256, Coin::Hadamard);
-    let mut state = QuantumState::localized(128, 256, 2).unwrap();
+fn main() -> Result<()> {
+    let walk = CoinedWalk1D::<f64>::new(256, Coin::Hadamard)?;
+    let mut state = QuantumState::localized(128, 256, 2)?;
 
     println!("Step | Norm² | Deviation from 1.0");
     println!("-----|-------|-------------------");
@@ -297,6 +297,7 @@ fn main() {
     }
 
     println!("\n✓ Norm preserved to machine precision over 100 steps!");
+    Ok(())
 }
 ```
 

@@ -281,10 +281,10 @@ let is_unitary = coin.is_unitary::<f64>(1e-10);
 `CoinedWalk1D<T>` implements a discrete-time quantum walk on a cycle.
 
 ```rust
-use circulant_rs::physics::{Coin, CoinedWalk1D, QuantumState, QuantumWalk};
+use circulant_rs::prelude::*;
 
 // Create a walk on a 101-position cycle with Hadamard coin
-let walk = CoinedWalk1D::<f64>::new(101, Coin::Hadamard);
+let walk = CoinedWalk1D::<f64>::new(101, Coin::Hadamard)?;
 
 // Create initial state
 let initial = QuantumState::superposition_at(50, 101, 2)?;
@@ -307,10 +307,10 @@ for _ in 0..30 {
 `CoinedWalk2D<T>` implements a discrete-time quantum walk on a 2D torus.
 
 ```rust
-use circulant_rs::physics::{Coin, CoinedWalk2D, QuantumState, QuantumWalk};
+use circulant_rs::prelude::*;
 
 // Create a walk on a 20x20 torus with 4D Grover coin
-let walk = CoinedWalk2D::<f64>::new(20, 20, Coin::grover_4d());
+let walk = CoinedWalk2D::<f64>::new(20, 20, Coin::grover_4d())?;
 
 // Create initial state (superposition at center)
 let initial = QuantumState::superposition_2d(10, 10, 20, 20, 4)?;
@@ -774,7 +774,6 @@ cargo run --example walk_visualization --features "physics visualize-bitmap"
 
 ```rust
 use circulant_rs::prelude::*;
-use circulant_rs::physics::{Coin, CoinedWalk1D, QuantumState, QuantumWalk};
 
 fn main() -> Result<()> {
     // Setup
@@ -783,7 +782,7 @@ fn main() -> Result<()> {
     let steps = 50;
 
     // Create walk with Hadamard coin
-    let walk = CoinedWalk1D::<f64>::new(n, Coin::Hadamard);
+    let walk = CoinedWalk1D::<f64>::new(n, Coin::Hadamard)?;
 
     // Create symmetric initial state
     let initial = QuantumState::superposition_at(center, n, 2)?;
