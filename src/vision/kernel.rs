@@ -4,6 +4,8 @@
 // @feature: vision
 // @depends: [crate::error, crate::traits, ndarray, num_complex]
 // @tests: [unit]
+// @version: 0.3.0
+// @event: DE-2026-001
 
 //! Convolution kernel definitions and builders.
 
@@ -178,6 +180,41 @@ impl<T: Scalar + FftNum> Kernel<T> {
         Self {
             data,
             name: "prewitt_y",
+        }
+    }
+
+    /// Create a 3x3 sharpen kernel.
+    ///
+    /// Enhances edges by amplifying the center pixel relative to neighbors.
+    /// The kernel structure is:
+    /// ```text
+    /// [[ 0, -1,  0],
+    ///  [-1,  5, -1],
+    ///  [ 0, -1,  0]]
+    /// ```
+    ///
+    /// Sum of coefficients is 1, preserving overall brightness.
+    /// This is equivalent to identity + negative Laplacian.
+    pub fn sharpen() -> Self {
+        let data = Array2::from_shape_vec(
+            (3, 3),
+            vec![
+                Complex::new(T::zero(), T::zero()),
+                Complex::new(T::from(-1.0).unwrap_or_else(T::zero), T::zero()),
+                Complex::new(T::zero(), T::zero()),
+                Complex::new(T::from(-1.0).unwrap_or_else(T::zero), T::zero()),
+                Complex::new(T::from(5.0).unwrap_or_else(T::zero), T::zero()),
+                Complex::new(T::from(-1.0).unwrap_or_else(T::zero), T::zero()),
+                Complex::new(T::zero(), T::zero()),
+                Complex::new(T::from(-1.0).unwrap_or_else(T::zero), T::zero()),
+                Complex::new(T::zero(), T::zero()),
+            ],
+        )
+        .unwrap_or_else(|_| Array2::zeros((3, 3)));
+
+        Self {
+            data,
+            name: "sharpen",
         }
     }
 
@@ -455,6 +492,49 @@ mod tests {
                     epsilon = 1e-10
                 );
             }
+        }
+    }
+
+    // @math_verified: true
+    // @verified_by: math_expert
+    // @properties_checked: [coefficient_correctness, sum_unity, rotational_symmetry]
+    // @version: 0.3.0
+    // @event: DE-2026-001
+    #[test]
+    fn test_sharpen_kernel_properties() {
+        let kernel = Kernel::<f64>::sharpen();
+        let data = kernel.data();
+
+        // Test: kernel is 3x3
+        assert_eq!(kernel.size(), (3, 3));
+        assert_eq!(kernel.name(), "sharpen");
+
+        // Test: center value is 5 (amplifies center pixel)
+        assert_relative_eq!(data[[1, 1]].re, 5.0);
+
+        // Test: sum of coefficients is 1 (preserves brightness)
+        let sum: f64 = data.iter().map(|c| c.re).sum();
+        assert_relative_eq!(sum, 1.0, epsilon = 1e-10);
+
+        // Test: symmetric structure (rotational symmetry)
+        // Expected: [[ 0, -1,  0],
+        //            [-1,  5, -1],
+        //            [ 0, -1,  0]]
+        // Corners are 0
+        assert_relative_eq!(data[[0, 0]].re, 0.0);
+        assert_relative_eq!(data[[0, 2]].re, 0.0);
+        assert_relative_eq!(data[[2, 0]].re, 0.0);
+        assert_relative_eq!(data[[2, 2]].re, 0.0);
+
+        // Edge centers are -1
+        assert_relative_eq!(data[[0, 1]].re, -1.0);
+        assert_relative_eq!(data[[1, 0]].re, -1.0);
+        assert_relative_eq!(data[[1, 2]].re, -1.0);
+        assert_relative_eq!(data[[2, 1]].re, -1.0);
+
+        // All imaginary parts are 0
+        for elem in data.iter() {
+            assert_relative_eq!(elem.im, 0.0);
         }
     }
 }

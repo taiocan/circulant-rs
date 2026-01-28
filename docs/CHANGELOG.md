@@ -1,11 +1,20 @@
 # Changelog
 
-**Version:** 0.2.0 | **Updated:** 2026-01-27 | **Reading time:** 2 min
+**Version:** 0.3.0 | **Updated:** 2026-01-28 | **Reading time:** 2 min
 
 > All notable changes to circulant-rs.
 
 This format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+---
+
+## [0.3.0] - 2026-01-28
+
+### Added
+
+- **Vision Module**
+  - `Kernel::sharpen()` - 3x3 sharpening filter for edge enhancement (DE-2026-001)
 
 ---
 

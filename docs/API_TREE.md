@@ -1,6 +1,6 @@
 # API Tree
 
-**Owner:** doc_expert | **Version:** 0.2.2 | **Updated:** 2026-01-28
+**Owner:** doc_expert | **Version:** 0.3.0 | **Updated:** 2026-01-28
 
 > 1-page overview of all public API.
 
@@ -119,6 +119,7 @@ Predefined convolution kernels.
 | Method | Description |
 |--------|-------------|
 | `::identity(size)` | Identity kernel |
+| `::sharpen()` | 3x3 sharpening filter |
 | `::sobel_x()` | Horizontal Sobel edge detector |
 | `::sobel_y()` | Vertical Sobel edge detector |
 
