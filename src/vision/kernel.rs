@@ -486,11 +486,7 @@ mod tests {
 
         for i in 0..3 {
             for j in 0..3 {
-                assert_relative_eq!(
-                    data_y[[i, j]].re,
-                    data_x[[j, i]].re,
-                    epsilon = 1e-10
-                );
+                assert_relative_eq!(data_y[[i, j]].re, data_x[[j, i]].re, epsilon = 1e-10);
             }
         }
     }
