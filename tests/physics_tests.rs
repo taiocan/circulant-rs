@@ -1,3 +1,10 @@
+// @test_for: [crate::physics::walk, crate::physics::coin, crate::physics::state]
+// @math_verified: true
+// @verified_by: math_expert
+// @properties_checked: [unitarity, probability_conservation, norm_preservation]
+// @version: 0.2.2
+// @event: initial
+
 //! Integration tests for quantum physics module.
 
 #![cfg(feature = "physics")]

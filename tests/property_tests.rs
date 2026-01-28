@@ -1,3 +1,10 @@
+// @test_for: [crate::core::circulant, crate::physics::walk, crate::physics::state]
+// @math_verified: true
+// @verified_by: math_expert
+// @properties_checked: [linearity, identity, eigenvalue_count, norm_preservation, probability_conservation]
+// @version: 0.2.2
+// @event: initial
+
 //! Property-based tests using proptest.
 
 use circulant_rs::core::Circulant;

@@ -1,3 +1,10 @@
+// @test_for: [crate::core::circulant, crate::core::block_circulant]
+// @math_verified: true
+// @verified_by: math_expert
+// @properties_checked: [fft_correctness, convolution_theorem, linearity]
+// @version: 0.2.2
+// @event: initial
+
 //! Integration tests for core circulant types.
 
 use approx::assert_relative_eq;

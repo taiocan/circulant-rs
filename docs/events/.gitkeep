@@ -1,0 +1,14 @@
+# Development Events Directory
+
+This directory contains Development Event (DE) documents that track
+changes following the EDAD (Expert-Driven Atomic Development) workflow.
+
+## Naming Convention
+
+DE documents follow the pattern: `DE-YYYY-NNN.md`
+- YYYY: Year
+- NNN: Sequential number (001, 002, ...)
+
+## Example
+
+`DE-2026-001.md` - First development event of 2026
