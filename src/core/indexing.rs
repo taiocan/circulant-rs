@@ -1,3 +1,10 @@
+// @module: crate::core::indexing
+// @status: stable
+// @owner: code_expert
+// @feature: none
+// @depends: []
+// @tests: [unit]
+
 //! Circular indexing utilities.
 
 /// Compute the circular (modular) index.

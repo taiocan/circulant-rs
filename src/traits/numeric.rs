@@ -1,3 +1,10 @@
+// @module: crate::traits::numeric
+// @status: stable
+// @owner: math_expert
+// @feature: none
+// @depends: [num_complex, num_traits]
+// @tests: [unit]
+
 //! Numeric trait bounds for scalar and complex types.
 
 use num_complex::Complex;

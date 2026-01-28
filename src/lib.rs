@@ -1,3 +1,10 @@
+// @module: crate
+// @status: stable
+// @owner: code_expert
+// @feature: none
+// @depends: [core, error, fft, traits, prelude]
+// @tests: [unit, integration]
+
 //! High-performance block-circulant matrix operations using FFT.
 //!
 //! This library exploits the fact that circulant matrices can be diagonalized

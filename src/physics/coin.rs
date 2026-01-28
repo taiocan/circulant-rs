@@ -1,3 +1,10 @@
+// @module: crate::physics::coin
+// @status: stable
+// @owner: math_expert
+// @feature: physics
+// @depends: [crate::traits, ndarray, num_complex]
+// @tests: [unit]
+
 //! Coin operators for quantum walks.
 
 use crate::traits::Scalar;

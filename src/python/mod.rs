@@ -1,3 +1,10 @@
+// @module: crate::python
+// @status: stable
+// @owner: code_expert
+// @feature: python
+// @depends: [crate::python::circulant, crate::python::error, crate::python::physics, pyo3]
+// @tests: [none]
+
 //! Python bindings for circulant-rs via PyO3.
 //!
 //! This module is not meant to be used from Rust code directly.

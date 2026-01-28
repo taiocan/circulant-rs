@@ -1,3 +1,10 @@
+// @module: crate::physics::walk_2d
+// @status: stable
+// @owner: math_expert
+// @feature: physics
+// @depends: [crate::fft, crate::physics::coin, crate::physics::state, crate::physics::walk, crate::traits]
+// @tests: [unit, property]
+
 //! 2D coined quantum walk implementation.
 
 use crate::fft::{FftBackend, RustFftBackend};

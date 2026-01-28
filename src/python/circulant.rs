@@ -1,3 +1,10 @@
+// @module: crate::python::circulant
+// @status: stable
+// @owner: code_expert
+// @feature: python
+// @depends: [crate::traits, crate::Circulant, pyo3]
+// @tests: [none]
+
 //! Python wrapper for Circulant matrix.
 
 #![allow(clippy::useless_conversion)]

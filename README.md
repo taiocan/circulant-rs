@@ -134,23 +134,29 @@ fn main() -> Result<()> {
 
 ```rust
 use circulant_rs::core::BlockCirculant;
-use ndarray::Array2;
+use circulant_rs::traits::BlockOps; // Nujno za mul_array!
+use ndarray::Array2; // ndarray v0.16.1 !!!
 use num_complex::Complex;
 
 fn main() {
-    // Create a 2D convolution kernel
+    // 1. Ustvarjanje 2D konvolucijskega jedra
     let kernel = Array2::from_shape_vec((3, 3), vec![
         Complex::new(1.0, 0.0), Complex::new(2.0, 0.0), Complex::new(1.0, 0.0),
         Complex::new(2.0, 0.0), Complex::new(4.0, 0.0), Complex::new(2.0, 0.0),
         Complex::new(1.0, 0.0), Complex::new(2.0, 0.0), Complex::new(1.0, 0.0),
     ]).unwrap();
 
-    // Create BCCB filter (zero-padded to output size)
+    // 2. Ustvarjanje BCCB filtra (zero-padding na 64x64)
+    // To uporabi 2D FFT za izjemno hitro procesiranje
     let filter = BlockCirculant::from_kernel(kernel, 64, 64).unwrap();
 
-    // Apply to 2D data - O(N log N) via 2D FFT!
-    let input = Array2::zeros((64, 64));
+    // 3. Priprava vhodnih podatkov (npr. slika 64x64)
+    let input: Array2<Complex<f64>> = Array2::zeros((64, 64));
+    
+    // 4. Množenje z uporabo BlockOps traita
     let output = filter.mul_array(&input).unwrap();
+
+    println!("Konvolucija uspešno izvedena. Velikost izhoda: {:?}", output.dim());
 }
 ```
 

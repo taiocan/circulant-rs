@@ -1,3 +1,10 @@
+// @module: crate::vision
+// @status: stable
+// @owner: code_expert
+// @feature: vision
+// @depends: [crate::vision::filter, crate::vision::kernel]
+// @tests: [none]
+
 //! Image processing with block-circulant matrices.
 //!
 //! This module provides FFT-accelerated image filtering using BCCB (Block Circulant

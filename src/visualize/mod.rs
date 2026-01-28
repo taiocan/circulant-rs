@@ -1,3 +1,10 @@
+// @module: crate::visualize
+// @status: stable
+// @owner: code_expert
+// @feature: visualize
+// @depends: [crate::visualize::heatmap, crate::visualize::quantum]
+// @tests: [none]
+
 //! Visualization utilities for quantum states and matrices.
 //!
 //! This module provides plotting functionality for probability distributions,

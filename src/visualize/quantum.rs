@@ -1,3 +1,10 @@
+// @module: crate::visualize::quantum
+// @status: stable
+// @owner: code_expert
+// @feature: visualize
+// @depends: [crate::error, plotters]
+// @tests: [unit]
+
 //! Quantum state visualization utilities.
 
 use plotters::prelude::*;

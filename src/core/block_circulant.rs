@@ -1,3 +1,10 @@
+// @module: crate::core::block_circulant
+// @status: stable
+// @owner: code_expert
+// @feature: none
+// @depends: [crate::error, crate::fft, crate::traits, ndarray]
+// @tests: [unit, property]
+
 //! Block Circulant with Circulant Blocks (BCCB) matrix implementation.
 
 use crate::error::{CirculantError, Result};

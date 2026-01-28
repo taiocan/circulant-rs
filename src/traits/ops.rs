@@ -1,3 +1,10 @@
+// @module: crate::traits::ops
+// @status: stable
+// @owner: code_expert
+// @feature: none
+// @depends: [crate::error, crate::traits::numeric, ndarray, num_complex]
+// @tests: [none]
+
 //! Operation traits for circulant matrices.
 
 use crate::error::Result;

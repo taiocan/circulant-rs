@@ -1,3 +1,10 @@
+// @module: crate::fft::rustfft_backend
+// @status: stable
+// @owner: code_expert
+// @feature: none
+// @depends: [crate::error, crate::fft::backend, crate::traits, rustfft, num_complex]
+// @tests: [unit]
+
 //! RustFFT backend implementation.
 
 use crate::error::{CirculantError, Result};

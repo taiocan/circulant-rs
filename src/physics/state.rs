@@ -1,3 +1,10 @@
+// @module: crate::physics::state
+// @status: stable
+// @owner: math_expert
+// @feature: physics
+// @depends: [crate::error, crate::traits, ndarray, num_complex]
+// @tests: [unit]
+
 //! Quantum state representation for quantum walks.
 
 use crate::error::{CirculantError, Result};

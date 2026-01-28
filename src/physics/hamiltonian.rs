@@ -1,3 +1,10 @@
+// @module: crate::physics::hamiltonian
+// @status: stable
+// @owner: math_expert
+// @feature: physics
+// @depends: [crate::error, crate::fft, crate::physics::state, crate::traits, crate::Circulant]
+// @tests: [unit, property]
+
 //! Hamiltonian operators for continuous-time quantum walks.
 //!
 //! This module provides traits and implementations for quantum Hamiltonians,

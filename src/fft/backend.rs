@@ -1,3 +1,10 @@
+// @module: crate::fft::backend
+// @status: stable
+// @owner: code_expert
+// @feature: none
+// @depends: [crate::traits, num_complex]
+// @tests: [none]
+
 //! FFT backend trait definition.
 
 use crate::traits::Scalar;

@@ -1,3 +1,10 @@
+// @module: crate::error
+// @status: stable
+// @owner: code_expert
+// @feature: none
+// @depends: [thiserror]
+// @tests: [unit]
+
 //! Error types for circulant-rs operations.
 
 use thiserror::Error;

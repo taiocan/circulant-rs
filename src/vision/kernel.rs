@@ -1,3 +1,10 @@
+// @module: crate::vision::kernel
+// @status: stable
+// @owner: math_expert
+// @feature: vision
+// @depends: [crate::error, crate::traits, ndarray, num_complex]
+// @tests: [unit]
+
 //! Convolution kernel definitions and builders.
 
 use ndarray::Array2;
@@ -114,6 +121,63 @@ impl<T: Scalar + FftNum> Kernel<T> {
         Self {
             data,
             name: "sobel_y",
+        }
+    }
+
+    /// Create a Prewitt edge detection kernel for vertical edges.
+    ///
+    /// The Prewitt operator uses uniform weights (1,1,1) compared to
+    /// Sobel's weighted center (1,2,1), making it simpler but slightly
+    /// more sensitive to noise.
+    pub fn prewitt_x() -> Self {
+        // Coefficients: [[-1,0,1],[-1,0,1],[-1,0,1]]
+        let data = Array2::from_shape_vec(
+            (3, 3),
+            vec![
+                Complex::new(T::from(-1.0).unwrap_or_else(T::zero), T::zero()),
+                Complex::new(T::zero(), T::zero()),
+                Complex::new(T::from(1.0).unwrap_or_else(T::zero), T::zero()),
+                Complex::new(T::from(-1.0).unwrap_or_else(T::zero), T::zero()),
+                Complex::new(T::zero(), T::zero()),
+                Complex::new(T::from(1.0).unwrap_or_else(T::zero), T::zero()),
+                Complex::new(T::from(-1.0).unwrap_or_else(T::zero), T::zero()),
+                Complex::new(T::zero(), T::zero()),
+                Complex::new(T::from(1.0).unwrap_or_else(T::zero), T::zero()),
+            ],
+        )
+        .unwrap_or_else(|_| Array2::zeros((3, 3)));
+
+        Self {
+            data,
+            name: "prewitt_x",
+        }
+    }
+
+    /// Create a Prewitt edge detection kernel for horizontal edges.
+    ///
+    /// The Prewitt Y kernel is the transpose of Prewitt X, detecting
+    /// intensity gradients in the vertical direction.
+    pub fn prewitt_y() -> Self {
+        // Coefficients: [[-1,-1,-1],[0,0,0],[1,1,1]]
+        let data = Array2::from_shape_vec(
+            (3, 3),
+            vec![
+                Complex::new(T::from(-1.0).unwrap_or_else(T::zero), T::zero()),
+                Complex::new(T::from(-1.0).unwrap_or_else(T::zero), T::zero()),
+                Complex::new(T::from(-1.0).unwrap_or_else(T::zero), T::zero()),
+                Complex::new(T::zero(), T::zero()),
+                Complex::new(T::zero(), T::zero()),
+                Complex::new(T::zero(), T::zero()),
+                Complex::new(T::from(1.0).unwrap_or_else(T::zero), T::zero()),
+                Complex::new(T::from(1.0).unwrap_or_else(T::zero), T::zero()),
+                Complex::new(T::from(1.0).unwrap_or_else(T::zero), T::zero()),
+            ],
+        )
+        .unwrap_or_else(|_| Array2::zeros((3, 3)));
+
+        Self {
+            data,
+            name: "prewitt_y",
         }
     }
 
@@ -274,5 +338,123 @@ mod tests {
         let coeffs = Array2::from_shape_vec((4, 4), vec![0.0; 16]).unwrap();
         let result = Kernel::<f64>::custom(coeffs);
         assert!(result.is_err());
+    }
+
+    // @math_verified: true
+    // @verified_by: math_expert
+    // @properties_checked: [coefficients, total_sum_zero]
+    #[test]
+    fn test_prewitt_x_structure() {
+        let kernel = Kernel::<f64>::prewitt_x();
+        assert_eq!(kernel.size(), (3, 3));
+        assert_eq!(kernel.name(), "prewitt_x");
+
+        // Expected: [[-1,0,1],[-1,0,1],[-1,0,1]]
+        let data = kernel.data();
+        // Row 0
+        assert_relative_eq!(data[[0, 0]].re, -1.0);
+        assert_relative_eq!(data[[0, 1]].re, 0.0);
+        assert_relative_eq!(data[[0, 2]].re, 1.0);
+        // Row 1
+        assert_relative_eq!(data[[1, 0]].re, -1.0);
+        assert_relative_eq!(data[[1, 1]].re, 0.0);
+        assert_relative_eq!(data[[1, 2]].re, 1.0);
+        // Row 2
+        assert_relative_eq!(data[[2, 0]].re, -1.0);
+        assert_relative_eq!(data[[2, 1]].re, 0.0);
+        assert_relative_eq!(data[[2, 2]].re, 1.0);
+    }
+
+    // @math_verified: true
+    // @verified_by: math_expert
+    // @properties_checked: [coefficients, total_sum_zero]
+    #[test]
+    fn test_prewitt_y_structure() {
+        let kernel = Kernel::<f64>::prewitt_y();
+        assert_eq!(kernel.size(), (3, 3));
+        assert_eq!(kernel.name(), "prewitt_y");
+
+        // Expected: [[-1,-1,-1],[0,0,0],[1,1,1]]
+        let data = kernel.data();
+        // Row 0
+        assert_relative_eq!(data[[0, 0]].re, -1.0);
+        assert_relative_eq!(data[[0, 1]].re, -1.0);
+        assert_relative_eq!(data[[0, 2]].re, -1.0);
+        // Row 1
+        assert_relative_eq!(data[[1, 0]].re, 0.0);
+        assert_relative_eq!(data[[1, 1]].re, 0.0);
+        assert_relative_eq!(data[[1, 2]].re, 0.0);
+        // Row 2
+        assert_relative_eq!(data[[2, 0]].re, 1.0);
+        assert_relative_eq!(data[[2, 1]].re, 1.0);
+        assert_relative_eq!(data[[2, 2]].re, 1.0);
+    }
+
+    // @math_verified: true
+    // @verified_by: math_expert
+    // @properties_checked: [column_sums, total_sum_zero]
+    #[test]
+    fn test_prewitt_x_vertical_edge_detection() {
+        // Prewitt X should detect vertical edges (intensity changes in x direction)
+        // Test with a simple vertical edge pattern
+        let kernel = Kernel::<f64>::prewitt_x();
+        let data = kernel.data();
+
+        // Sum of left column should be -3 (detects left side of vertical edge)
+        let left_sum: f64 = data[[0, 0]].re + data[[1, 0]].re + data[[2, 0]].re;
+        assert_relative_eq!(left_sum, -3.0);
+
+        // Sum of right column should be +3 (detects right side of vertical edge)
+        let right_sum: f64 = data[[0, 2]].re + data[[1, 2]].re + data[[2, 2]].re;
+        assert_relative_eq!(right_sum, 3.0);
+
+        // Sum of middle column should be 0
+        let mid_sum: f64 = data[[0, 1]].re + data[[1, 1]].re + data[[2, 1]].re;
+        assert_relative_eq!(mid_sum, 0.0);
+    }
+
+    // @math_verified: true
+    // @verified_by: math_expert
+    // @properties_checked: [row_sums, total_sum_zero]
+    #[test]
+    fn test_prewitt_y_horizontal_edge_detection() {
+        // Prewitt Y should detect horizontal edges (intensity changes in y direction)
+        // Test with a simple horizontal edge pattern
+        let kernel = Kernel::<f64>::prewitt_y();
+        let data = kernel.data();
+
+        // Sum of top row should be -3 (detects top side of horizontal edge)
+        let top_sum: f64 = data[[0, 0]].re + data[[0, 1]].re + data[[0, 2]].re;
+        assert_relative_eq!(top_sum, -3.0);
+
+        // Sum of bottom row should be +3 (detects bottom side of horizontal edge)
+        let bottom_sum: f64 = data[[2, 0]].re + data[[2, 1]].re + data[[2, 2]].re;
+        assert_relative_eq!(bottom_sum, 3.0);
+
+        // Sum of middle row should be 0
+        let mid_sum: f64 = data[[1, 0]].re + data[[1, 1]].re + data[[1, 2]].re;
+        assert_relative_eq!(mid_sum, 0.0);
+    }
+
+    // @math_verified: true
+    // @verified_by: math_expert
+    // @properties_checked: [transpose_relation]
+    #[test]
+    fn test_prewitt_transpose_relation() {
+        // Mathematical property: Prewitt Y = transpose(Prewitt X)
+        let kernel_x = Kernel::<f64>::prewitt_x();
+        let kernel_y = Kernel::<f64>::prewitt_y();
+        let data_x = kernel_x.data();
+        let data_y = kernel_y.data();
+
+        for i in 0..3 {
+            for j in 0..3 {
+                assert_relative_eq!(
+                    data_y[[i, j]].re,
+                    data_x[[j, i]].re,
+                    epsilon = 1e-10
+                );
+            }
+        }
     }
 }

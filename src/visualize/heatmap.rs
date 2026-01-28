@@ -1,3 +1,10 @@
+// @module: crate::visualize::heatmap
+// @status: stable
+// @owner: code_expert
+// @feature: visualize
+// @depends: [crate::error, crate::visualize::quantum, ndarray, plotters]
+// @tests: [unit]
+
 //! Heatmap visualization for 2D data.
 
 use ndarray::Array2;

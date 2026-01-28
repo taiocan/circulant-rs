@@ -1,3 +1,10 @@
+// @module: crate::core
+// @status: stable
+// @owner: code_expert
+// @feature: none
+// @depends: [crate::core::circulant, crate::core::block_circulant, crate::core::indexing]
+// @tests: [none]
+
 //! Core circulant matrix types.
 //!
 //! This module provides the fundamental circulant matrix types.

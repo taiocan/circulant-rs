@@ -1,3 +1,10 @@
+// @module: crate::physics::walk
+// @status: stable
+// @owner: math_expert
+// @feature: physics
+// @depends: [crate::physics::state, crate::traits, ndarray, num_complex]
+// @tests: [none]
+
 //! Quantum walk trait definition.
 
 use crate::physics::state::QuantumState;

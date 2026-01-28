@@ -1,3 +1,10 @@
+// @module: crate::python::physics
+// @status: stable
+// @owner: code_expert
+// @feature: python
+// @depends: [crate::physics, pyo3]
+// @tests: [none]
+
 //! Python wrappers for physics module.
 
 #![allow(clippy::useless_conversion)]

@@ -1,3 +1,10 @@
+// @module: crate::prelude
+// @status: stable
+// @owner: code_expert
+// @feature: none
+// @depends: [crate::core, crate::error, crate::fft, crate::traits, crate::physics]
+// @tests: [none]
+
 //! Convenient re-exports for common usage.
 //!
 //! This module provides a convenient way to import commonly used types:

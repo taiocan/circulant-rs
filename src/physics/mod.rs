@@ -1,3 +1,10 @@
+// @module: crate::physics
+// @status: stable
+// @owner: math_expert
+// @feature: physics
+// @depends: [crate::physics::coin, crate::physics::hamiltonian, crate::physics::state, crate::physics::walk, crate::physics::walk_1d, crate::physics::walk_2d]
+// @tests: [none]
+
 //! Quantum physics module for quantum walks and simulations.
 //!
 //! This module provides types for simulating quantum walks on circulant graphs.

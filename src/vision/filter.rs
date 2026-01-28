@@ -1,3 +1,10 @@
+// @module: crate::vision::filter
+// @status: stable
+// @owner: code_expert
+// @feature: vision
+// @depends: [crate::core::BlockCirculant, crate::error, crate::traits, crate::vision::kernel, ndarray]
+// @tests: [unit]
+
 //! BCCB filter implementation for image convolution.
 
 use ndarray::Array2;

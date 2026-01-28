@@ -1,3 +1,10 @@
+// @module: crate::core::circulant
+// @status: stable
+// @owner: code_expert
+// @feature: none
+// @depends: [crate::error, crate::fft, crate::traits]
+// @tests: [unit, property]
+
 //! 1D Circulant matrix implementation.
 
 use crate::error::{CirculantError, Result};

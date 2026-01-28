@@ -1,3 +1,10 @@
+// @module: crate::python::error
+// @status: stable
+// @owner: code_expert
+// @feature: python
+// @depends: [crate::CirculantError, pyo3]
+// @tests: [none]
+
 //! Error conversion for Python bindings.
 
 use pyo3::exceptions::PyValueError;
