@@ -4,6 +4,9 @@ Cargo.lock
 chat.txt
 *.jsonl
 
+# Claude Code configuration
+.claude/
+
 # IDE
 .idea/
 .vscode/
