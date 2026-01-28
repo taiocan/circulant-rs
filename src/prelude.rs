@@ -13,10 +13,12 @@
 //! use circulant_rs::prelude::*;
 //! ```
 
+#[allow(deprecated)]
 pub use crate::core::{BlockCirculant, Circulant};
+pub use crate::core::{Circulant1D, Circulant2D, Circulant3D, Circulant4D, CirculantTensor};
 pub use crate::error::{CirculantError, Result};
 pub use crate::fft::{FftBackend, RustFftBackend};
-pub use crate::traits::{BlockOps, CirculantOps, ComplexScalar, Scalar};
+pub use crate::traits::{BlockOps, CirculantOps, ComplexScalar, Scalar, TensorOps};
 
 #[cfg(feature = "physics")]
 pub use crate::physics::{

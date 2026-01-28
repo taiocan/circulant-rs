@@ -6,6 +6,9 @@
 // @tests: [unit, property]
 
 //! Block Circulant with Circulant Blocks (BCCB) matrix implementation.
+//!
+//! **Deprecation Note**: This module provides the legacy `BlockCirculant<T>` type.
+//! For new code, prefer using [`CirculantTensor<T, 2>`](crate::core::CirculantTensor).
 
 use crate::error::{CirculantError, Result};
 use crate::fft::{FftBackend, RustFftBackend};
@@ -28,6 +31,15 @@ use serde::{Deserialize, Serialize};
 ///
 /// The key property is that BCCB matrices can be diagonalized by the 2D DFT,
 /// enabling O(MN log(MN)) matrix-vector multiplication.
+///
+/// # Deprecation Note
+///
+/// This type is deprecated in favor of [`CirculantTensor<T, 2>`](crate::core::CirculantTensor).
+/// For new code, prefer using `CirculantTensor` which provides a unified API for all dimensions.
+#[deprecated(
+    since = "1.0.0",
+    note = "Use CirculantTensor<T, 2> or Circulant2D<T> instead for a unified N-D API"
+)]
 #[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct BlockCirculant<T: Scalar + rustfft::FftNum> {
@@ -57,6 +69,7 @@ pub struct BlockCirculant<T: Scalar + rustfft::FftNum> {
     fft_cols: Option<Arc<RustFftBackend<T>>>,
 }
 
+#[allow(deprecated)]
 impl<T: Scalar + rustfft::FftNum> BlockCirculant<T> {
     /// Create a BCCB matrix from a 2D kernel (first block).
     ///
@@ -219,6 +232,7 @@ impl<T: Scalar + rustfft::FftNum> BlockCirculant<T> {
     }
 }
 
+#[allow(deprecated)]
 impl<T: Scalar + rustfft::FftNum> BlockOps<T> for BlockCirculant<T> {
     fn mul_array(&self, x: &Array2<Complex<T>>) -> Result<Array2<Complex<T>>> {
         let (rows, cols) = self.block_size;

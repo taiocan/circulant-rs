@@ -70,7 +70,11 @@ mod python;
 pub mod prelude;
 
 // Re-export commonly used types at the crate root
+#[allow(deprecated)]
 pub use crate::core::{BlockCirculant, Circulant};
+pub use crate::core::{
+    Circulant1D, Circulant2D, Circulant3D, Circulant4D, CirculantTensor,
+};
 pub use crate::error::{CirculantError, Result};
 pub use crate::fft::{FftBackend, RustFftBackend};
-pub use crate::traits::{BlockOps, CirculantOps, Scalar};
+pub use crate::traits::{BlockOps, CirculantOps, Scalar, TensorOps};

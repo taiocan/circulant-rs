@@ -8,6 +8,7 @@
 //! Python wrapper for Circulant matrix.
 
 #![allow(clippy::useless_conversion)]
+#![allow(deprecated)]
 
 use pyo3::prelude::*;
 

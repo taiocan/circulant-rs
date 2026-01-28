@@ -1,6 +1,6 @@
 # circulant-rs User Guide
 
-**Version:** 0.2.0 | **Updated:** 2026-01-27 | **Reading time:** 20 min
+**Version:** 1.0.0 | **Updated:** 2026-01-28 | **Reading time:** 25 min
 
 > Comprehensive guide to circulant-rs for matrix operations, quantum walks, and image processing.
 
@@ -10,8 +10,9 @@
 2. [Quick Start](#quick-start)
 3. [Core Concepts](#core-concepts)
 4. [Core Module](#core-module)
-   - [Circulant Matrices](#circulant-matrices)
-   - [Block Circulant Matrices](#block-circulant-matrices)
+   - [N-D Circulant Tensors](#n-d-circulant-tensors) (New in 1.0)
+   - [Circulant Matrices](#circulant-matrices) (Legacy)
+   - [Block Circulant Matrices](#block-circulant-matrices) (Legacy)
 5. [Physics Module](#physics-module)
    - [Quantum States](#quantum-states)
    - [Coin Operators](#coin-operators)
@@ -39,7 +40,7 @@ Add circulant-rs to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-circulant-rs = "0.2"
+circulant-rs = "1.0"
 ```
 
 ### With Specific Features
@@ -47,13 +48,13 @@ circulant-rs = "0.2"
 ```toml
 [dependencies]
 # Core + physics (default)
-circulant-rs = "0.2"
+circulant-rs = "1.0"
 
 # All features
-circulant-rs = { version = "0.2", features = ["physics", "vision", "visualize-bitmap", "parallel", "serde"] }
+circulant-rs = { version = "1.0", features = ["physics", "vision", "visualize-bitmap", "parallel", "serde"] }
 
 # Minimal (no default features)
-circulant-rs = { version = "0.2", default-features = false }
+circulant-rs = { version = "1.0", default-features = false }
 ```
 
 ---
@@ -108,7 +109,117 @@ Circulant matrices are diagonalized by the Discrete Fourier Transform (DFT). Thi
 
 ## Core Module
 
-### Circulant Matrices
+### N-D Circulant Tensors
+
+*New in version 1.0.0*
+
+The `CirculantTensor<T, D>` struct provides a unified API for N-dimensional circulant operations.
+It replaces `Circulant<T>` (1D) and `BlockCirculant<T>` (2D) with a single generic type.
+
+#### Creating N-D Tensors
+
+```rust
+use circulant_rs::{CirculantTensor, Circulant1D, Circulant2D, Circulant3D, TensorOps};
+use ndarray::{ArrayD, IxDyn};
+use num_complex::Complex;
+
+fn complex(re: f64, im: f64) -> Complex<f64> {
+    Complex::new(re, im)
+}
+
+// 1D tensor (equivalent to old Circulant<T>)
+let gen_1d = ArrayD::from_shape_vec(
+    IxDyn(&[4]),
+    vec![complex(4.0, 0.0), complex(-1.0, 0.0), complex(0.0, 0.0), complex(-1.0, 0.0)],
+).unwrap();
+let tensor_1d: Circulant1D<f64> = CirculantTensor::new(gen_1d)?;
+
+// 2D tensor (equivalent to old BlockCirculant<T>)
+let gen_2d = ArrayD::from_shape_vec(
+    IxDyn(&[8, 8]),
+    (0..64).map(|i| complex(i as f64 * 0.1, 0.0)).collect(),
+).unwrap();
+let tensor_2d: Circulant2D<f64> = CirculantTensor::new(gen_2d)?;
+
+// 3D tensor for volumetric operations
+let gen_3d = ArrayD::from_shape_vec(
+    IxDyn(&[16, 16, 16]),
+    (0..4096).map(|i| complex(i as f64 * 0.01, 0.0)).collect(),
+).unwrap();
+let tensor_3d: Circulant3D<f64> = CirculantTensor::new(gen_3d)?;
+```
+
+#### Tensor Operations
+
+```rust
+use circulant_rs::{CirculantTensor, TensorOps};
+
+let mut tensor = CirculantTensor::<f64, 2>::new(gen)?;
+
+// Precompute spectrum for repeated operations
+tensor.precompute();
+assert!(tensor.is_precomputed());
+
+// Multiply tensor by input
+let result = tensor.mul_tensor(&input)?;
+
+// Multiply by flattened vector
+let result_vec = tensor.mul_vec(&input_vec)?;
+
+// Get eigenvalues (N-D FFT of generator)
+let eigenvalues = tensor.eigenvalues_nd();
+
+// Get shape and size
+let shape: [usize; 2] = tensor.shape();
+let total_size: usize = tensor.total_size();
+
+// Get generator
+let gen = tensor.generator();
+```
+
+#### Parallel Operations
+
+With the `parallel` feature enabled, large tensors can use parallel FFT:
+
+```rust
+#[cfg(feature = "parallel")]
+{
+    // Explicit parallel multiplication
+    let result = tensor.mul_tensor_parallel(&input)?;
+
+    // Auto-select based on size threshold
+    let result = tensor.mul_tensor_auto(&input)?;
+}
+```
+
+#### Type Aliases
+
+For convenience, type aliases are provided for common dimensions:
+
+| Type Alias | Equivalent | Use Case |
+|------------|------------|----------|
+| `Circulant1D<T>` | `CirculantTensor<T, 1>` | Signal processing |
+| `Circulant2D<T>` | `CirculantTensor<T, 2>` | Image processing |
+| `Circulant3D<T>` | `CirculantTensor<T, 3>` | Volumetric data |
+| `Circulant4D<T>` | `CirculantTensor<T, 4>` | Spatiotemporal data |
+
+#### Migration from Legacy Types
+
+```rust
+// Old API (deprecated)
+use circulant_rs::Circulant;
+let c = Circulant::from_real(vec![1.0, 2.0, 3.0])?;
+
+// New API
+use circulant_rs::{CirculantTensor, TensorOps};
+use ndarray::ArrayD;
+let gen = ArrayD::from_shape_vec(vec![3], vec![...]).unwrap();
+let tensor = CirculantTensor::<f64, 1>::new(gen)?;
+```
+
+### Circulant Matrices (Legacy)
+
+> **Deprecated in 1.0.0**: Use `CirculantTensor<T, 1>` or `Circulant1D<T>` instead.
 
 The `Circulant<T>` struct represents a 1D circulant matrix.
 
@@ -168,7 +279,9 @@ let b = vec![1.0, 0.0, 0.0, 0.0];
 let x = circ.solve_real(&b)?;
 ```
 
-### Block Circulant Matrices
+### Block Circulant Matrices (Legacy)
+
+> **Deprecated in 1.0.0**: Use `CirculantTensor<T, 2>` or `Circulant2D<T>` instead.
 
 The `BlockCirculant<T>` struct represents a 2D block circulant with circulant blocks (BCCB) matrix.
 
@@ -751,6 +864,10 @@ match Circulant::from_real(vec![]) {
 ### Run Built-in Examples
 
 ```bash
+# N-D Circulant Tensors (new in 1.0)
+cargo run --example tensor_3d
+cargo run --example tensor_nd
+
 # 1D Quantum walk
 cargo run --example quantum_walk_1d --features physics
 

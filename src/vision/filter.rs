@@ -11,6 +11,7 @@ use ndarray::Array2;
 use num_complex::Complex;
 use rustfft::FftNum;
 
+#[allow(deprecated)]
 use crate::core::BlockCirculant;
 use crate::error::{CirculantError, Result};
 use crate::traits::{BlockOps, Scalar};
@@ -20,12 +21,14 @@ use super::kernel::Kernel;
 /// A BCCB-based image filter for efficient convolution.
 ///
 /// Uses FFT to perform O(NM log NM) convolution instead of O(N²M²).
+#[allow(deprecated)]
 pub struct BCCBFilter<T: Scalar + FftNum> {
     matrix: BlockCirculant<T>,
     kernel_size: (usize, usize),
     output_size: (usize, usize),
 }
 
+#[allow(deprecated)]
 impl<T: Scalar + FftNum> BCCBFilter<T> {
     /// Create a new BCCB filter from a kernel.
     ///

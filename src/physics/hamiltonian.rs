@@ -10,11 +10,12 @@
 //! This module provides traits and implementations for quantum Hamiltonians,
 //! with a focus on circulant Hamiltonians that enable O(N log N) time evolution.
 
+#[allow(deprecated)]
+use crate::Circulant;
 use crate::error::{CirculantError, Result};
 use crate::fft::{FftBackend, RustFftBackend};
 use crate::physics::state::QuantumState;
 use crate::traits::Scalar;
-use crate::Circulant;
 use num_complex::Complex;
 use std::sync::Arc;
 
@@ -218,6 +219,7 @@ impl<T: Scalar + rustfft::FftNum> CirculantHamiltonian<T> {
     /// # Errors
     ///
     /// Returns an error if the circulant cannot be created.
+    #[allow(deprecated)]
     pub fn to_circulant(&self) -> Result<Circulant<T>> {
         Circulant::new(self.generator.clone())
     }

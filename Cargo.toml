@@ -1,8 +1,8 @@
 [package]
 name = "circulant-rs"
-version = "0.3.0"
+version = "1.0.0"
 edition = "2021"
-description = "High-performance block-circulant matrix operations using FFT"
+description = "High-performance block-circulant tensor operations using FFT"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/taiocan/circulant-rs"
@@ -55,4 +55,8 @@ harness = false
 [[bench]]
 name = "scaling_benchmark"
 path = "benches/comparative/scaling_benchmark.rs"
+harness = false
+
+[[bench]]
+name = "tensor_benchmark"
 harness = false

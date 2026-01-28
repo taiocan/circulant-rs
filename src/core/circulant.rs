@@ -6,6 +6,9 @@
 // @tests: [unit, property]
 
 //! 1D Circulant matrix implementation.
+//!
+//! **Deprecation Note**: This module provides the legacy `Circulant<T>` type.
+//! For new code, prefer using [`CirculantTensor<T, 1>`](crate::core::CirculantTensor).
 
 use crate::error::{CirculantError, Result};
 use crate::fft::{FftBackend, RustFftBackend};
@@ -32,6 +35,15 @@ use serde::{Deserialize, Serialize};
 /// The key property exploited by this implementation is that any circulant
 /// matrix can be diagonalized by the DFT matrix, enabling O(N log N)
 /// matrix-vector multiplication instead of O(N²).
+///
+/// # Deprecation Note
+///
+/// This type is deprecated in favor of [`CirculantTensor<T, 1>`](crate::core::CirculantTensor).
+/// For new code, prefer using `CirculantTensor` which provides a unified API for all dimensions.
+#[deprecated(
+    since = "1.0.0",
+    note = "Use CirculantTensor<T, 1> or Circulant1D<T> instead for a unified N-D API"
+)]
 #[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Circulant<T: Scalar + rustfft::FftNum> {
@@ -47,6 +59,7 @@ pub struct Circulant<T: Scalar + rustfft::FftNum> {
     fft: Option<Arc<RustFftBackend<T>>>,
 }
 
+#[allow(deprecated)]
 impl<T: Scalar + rustfft::FftNum> Circulant<T> {
     /// Create a new circulant matrix from a complex generator.
     ///
@@ -175,6 +188,7 @@ impl<T: Scalar + rustfft::FftNum> Circulant<T> {
     }
 }
 
+#[allow(deprecated)]
 impl<T: Scalar + rustfft::FftNum> CirculantOps<T> for Circulant<T> {
     fn mul_vec(&self, x: &[Complex<T>]) -> Result<Vec<Complex<T>>> {
         let n = self.generator.len();

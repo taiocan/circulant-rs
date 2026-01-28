@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-circulant-rs: High-performance block-circulant matrix operations via FFT.
+circulant-rs: High-performance block-circulant tensor operations via FFT.
 
 ## Quick Commands
 
@@ -16,6 +16,22 @@ circulant-rs: High-performance block-circulant matrix operations via FFT.
 2. **Tests before commit**: `cargo test --all-features`
 3. **TDD required**: Failing test before implementation
 4. **DE required for T1+**: Development Event document for non-trivial changes
+
+## Version Bump Checklist
+
+**MANDATORY for any version bump (T1/T2/T3):**
+
+| File | Update Required |
+|------|-----------------|
+| `Cargo.toml` | Version number |
+| `README.md` | Version, features, examples, roadmap |
+| `docs/CHANGELOG.md` | New version entry |
+| `docs/USER_GUIDE.md` | API changes, new tutorials |
+| `docs/API_TREE.md` | New/changed public API |
+
+**Additional for T2/T3:**
+- `docs/math.md` - If numerical algorithms changed
+- `docs/ARCHITECTURE.md` - If module structure changed
 
 ## EDAD (Expert-Driven Atomic Development)
 
@@ -54,7 +70,7 @@ See `.claude/experts/` for specialized agents:
 | `test_expert.md` | TDD, verification | Test code + metadata |
 | `math_expert.md` | Numerical validation | docs/math.md, @math_verified |
 | `code_expert.md` | Implementation | Source code + metadata |
-| `doc_expert.md` | Human-facing docs | CHANGELOG, USER_GUIDE, API_TREE |
+| `doc_expert.md` | Human-facing docs | README, CHANGELOG, USER_GUIDE, API_TREE |
 
 ## Source Metadata
 
@@ -113,10 +129,26 @@ ls docs/events/DE-*.md
 rg "@event: DE-2026-001" src/ tests/ -l
 ```
 
+## Skills
+
+On-demand procedural workflows loaded via slash commands:
+
+| Skill | Purpose | Used By |
+|-------|---------|---------|
+| `/discover` | Codebase discovery queries | All experts |
+| `/create-de` | Development Event creation | plan_expert |
+| `/tdd-cycle` | TDD workflow and test patterns | test_expert |
+| `/verify-math` | Mathematical verification | math_expert |
+| `/implement` | Implementation workflow | code_expert |
+| `/handoff` | Expert handoff protocol | All experts |
+
+Skills are located in `.claude/skills/*/SKILL.md`.
+
 ## Reference Docs
 
 | Doc | Purpose | Owner |
 |-----|---------|-------|
+| README.md | Project overview, quick start | doc_expert |
 | docs/ARCHITECTURE.md | System architecture | doc_expert |
 | docs/USER_GUIDE.md | API tutorials | doc_expert |
 | docs/API_TREE.md | Public API overview | doc_expert |

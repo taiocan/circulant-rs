@@ -13,4 +13,4 @@ mod numeric;
 mod ops;
 
 pub use numeric::{ComplexScalar, Scalar};
-pub use ops::{BlockOps, CirculantOps};
+pub use ops::{BlockOps, CirculantOps, TensorOps};

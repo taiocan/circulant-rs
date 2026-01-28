@@ -1,8 +1,8 @@
 # circulant-rs
 
-**Version:** 0.2.0 | **Updated:** 2026-01-27 | **Reading time:** 5 min
+**Version:** 1.0.0 | **Updated:** 2026-01-28 | **Reading time:** 5 min
 
-A high-performance Rust library for block-circulant matrix operations and quantum walk simulations.
+A high-performance Rust library for block-circulant tensor operations and quantum walk simulations.
 
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)]()
 [![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)]()
@@ -50,8 +50,10 @@ Quantum walks with N=1,000,000 positions
 
 The library provides:
 
+- **N-D Circulant Tensors** (New in 1.0) - Generic N-dimensional circulant operations with O(N log N) complexity
 - **1D Circulant matrices** - For signal processing, convolution, and 1D quantum walks
 - **2D Block Circulant (BCCB) matrices** - For image processing and 2D periodic systems
+- **3D/4D Tensor operations** - For volumetric data, video processing, and scientific computing
 - **Quantum Walk simulation** - Discrete-time coined quantum walks with FFT-accelerated evolution
 - **Full serialization support** - Save and restore quantum states and walk configurations
 
@@ -61,7 +63,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-circulant-rs = "0.2"
+circulant-rs = "1.0"
 ```
 
 ### Feature Flags
@@ -130,7 +132,36 @@ fn main() -> Result<()> {
 }
 ```
 
-### 2D Block Circulant Operations
+### N-D Circulant Tensor Operations (New in 1.0)
+
+```rust
+use circulant_rs::{CirculantTensor, Circulant3D, TensorOps};
+use ndarray::{ArrayD, IxDyn};
+use num_complex::Complex;
+
+fn main() -> circulant_rs::Result<()> {
+    // Create a 3D circulant tensor (e.g., for volumetric convolution)
+    let shape = [16, 16, 16];
+    let gen = ArrayD::from_shape_vec(
+        IxDyn(&shape),
+        (0..4096).map(|i| Complex::new((i as f64 * 0.01).sin(), 0.0)).collect(),
+    ).unwrap();
+
+    let mut tensor: Circulant3D<f64> = CirculantTensor::new(gen)?;
+
+    // Precompute for repeated operations
+    tensor.precompute();
+
+    // Multiply - O(N log N) via separable N-D FFT
+    let input = ArrayD::from_elem(IxDyn(&shape), Complex::new(1.0, 0.0));
+    let result = tensor.mul_tensor(&input)?;
+
+    println!("3D tensor multiplication complete: {} elements", result.len());
+    Ok(())
+}
+```
+
+### 2D Block Circulant Operations (Legacy)
 
 ```rust
 use circulant_rs::core::BlockCirculant;
@@ -257,9 +288,9 @@ See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for detailed technical documentati
 
 | Module | Description |
 |--------|-------------|
-| `core` | `Circulant<T>` and `BlockCirculant<T>` types |
+| `core` | `CirculantTensor<T, D>`, `Circulant1D/2D/3D/4D<T>` types (1.0), plus legacy `Circulant<T>` and `BlockCirculant<T>` |
 | `fft` | FFT backend trait and RustFFT implementation |
-| `traits` | `Scalar`, `CirculantOps`, `BlockOps` traits |
+| `traits` | `TensorOps<T, D>` (1.0), `Scalar`, `CirculantOps`, `BlockOps` traits |
 | `physics` | Quantum state, coins, 1D/2D walks, Hamiltonian |
 | `vision` | BCCB image filtering and kernels |
 | `visualize` | Quantum state and heatmap plotting |
@@ -340,22 +371,24 @@ For detailed methodology, see [docs/BENCHMARKS.md](./docs/BENCHMARKS.md).
 
 ## Roadmap
 
-### v0.2.0 (Current)
+### v1.0.0 (Current)
+- [x] **N-dimensional circulant tensors** (`CirculantTensor<T, D>`)
+- [x] **Parallel N-D FFT** via rayon
+- [x] **Type aliases**: `Circulant1D`, `Circulant2D`, `Circulant3D`, `Circulant4D`
 - [x] 1D Circulant with FFT multiplication
 - [x] 2D Block Circulant (BCCB)
-- [x] Quantum walk simulation (1D coined walks)
+- [x] Quantum walk simulation (1D/2D coined walks)
 - [x] Serde serialization
 - [x] Rayon parallelization
 - [x] Vision module (image filtering with BCCB)
-- [x] 2D quantum walks on torus
 - [x] Continuous-time walks (Hamiltonian module)
 - [x] Visualization with plotters
 - [x] Python bindings via PyO3
 
-### v0.3.0 (Planned)
+### v1.1.0 (Planned)
 - [ ] GPU acceleration (wgpu/cuda)
-- [ ] N-dimensional circulant tensors
 - [ ] Circulant neural network layers
+- [ ] N-D quantum walks
 
 ## License
 

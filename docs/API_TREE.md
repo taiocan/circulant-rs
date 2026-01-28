@@ -1,6 +1,6 @@
 # API Tree
 
-**Owner:** doc_expert | **Version:** 0.3.0 | **Updated:** 2026-01-28
+**Owner:** doc_expert | **Version:** 1.0.0 | **Updated:** 2026-01-28
 
 > 1-page overview of all public API.
 
@@ -8,7 +8,40 @@
 
 ## Core Module (`crate::core`)
 
-### `Circulant<T>`
+### `CirculantTensor<T, D>` (New in 1.0)
+N-dimensional circulant tensor with O(N log N) operations via separable FFT.
+
+| Type Alias | Description |
+|------------|-------------|
+| `Circulant1D<T>` | `CirculantTensor<T, 1>` - 1D signals |
+| `Circulant2D<T>` | `CirculantTensor<T, 2>` - 2D images |
+| `Circulant3D<T>` | `CirculantTensor<T, 3>` - 3D volumes |
+| `Circulant4D<T>` | `CirculantTensor<T, 4>` - 4D data |
+
+| Method | Description |
+|--------|-------------|
+| `::new(ArrayD<Complex<T>>)` | Create from complex generator tensor |
+| `::from_real(ArrayD<T>)` | Create from real generator tensor |
+| `::from_kernel(ArrayD<T>, shape)` | Create from convolution kernel |
+| `.mul_tensor(&ArrayD)` | N-D tensor multiplication |
+| `.mul_vec(&[Complex<T>])` | Multiply by flattened vector |
+| `.eigenvalues_nd()` | Get eigenvalues via N-D FFT |
+| `.precompute()` | Cache spectrum for repeated operations |
+| `.is_precomputed()` | Check if spectrum is cached |
+| `.generator()` | Access the generator tensor |
+| `.shape()` | Tensor shape as `[usize; D]` |
+| `.total_size()` | Total number of elements |
+
+**Parallel operations** (feature = "parallel"):
+
+| Method | Description |
+|--------|-------------|
+| `.mul_tensor_parallel(&ArrayD)` | Parallel N-D multiplication |
+| `.mul_tensor_auto(&ArrayD)` | Auto-select based on size |
+
+### `Circulant<T>` (Deprecated)
+> **Deprecated in 1.0.0**: Use `CirculantTensor<T, 1>` instead.
+
 1D circulant matrix with O(N log N) operations.
 
 | Method | Description |
@@ -22,7 +55,9 @@
 | `.generator()` | Access the generator vector |
 | `.size()` | Matrix dimension |
 
-### `BlockCirculant<T>`
+### `BlockCirculant<T>` (Deprecated)
+> **Deprecated in 1.0.0**: Use `CirculantTensor<T, 2>` instead.
+
 2D Block Circulant with Circulant Blocks (BCCB) matrix.
 
 | Method | Description |
@@ -36,8 +71,9 @@
 
 | Function | Description |
 |----------|-------------|
-| `naive_circulant_mul(&[C], &[C])` | Reference O(N²) multiplication |
-| `naive_bccb_mul(&Array2, &Array2)` | Reference O(N⁴) multiplication |
+| `naive_tensor_mul(&ArrayD, &ArrayD)` | Reference O(N²) N-D multiplication |
+| `naive_circulant_mul(&[C], &[C])` | Reference O(N²) 1D multiplication |
+| `naive_bccb_mul(&Array2, &Array2)` | Reference O(N⁴) 2D multiplication |
 
 ---
 
@@ -171,22 +207,33 @@ Default backend using rustfft crate.
 
 ## Traits Module (`crate::traits`)
 
-### `CirculantOps<T>`
-Core operations for circulant matrices.
+### `TensorOps<T, D>` (New in 1.0)
+Core operations for N-D circulant tensors.
+
+| Method | Description |
+|--------|-------------|
+| `.mul_tensor(&ArrayD<Complex<T>>)` | N-D tensor multiplication |
+| `.mul_vec(&[Complex<T>])` | Multiply by flattened vector |
+| `.eigenvalues_nd()` | Get eigenvalues as ArrayD |
+| `.shape()` | Tensor shape as `[usize; D]` |
+| `.total_size()` | Total number of elements |
+
+### `CirculantOps<T>` (Legacy)
+Core operations for 1D circulant matrices.
 
 | Method | Description |
 |--------|-------------|
 | `.mul_vec(&[Complex<T>])` | Matrix-vector product |
 | `.eigenvalues()` | Compute eigenvalues |
 
-### `BlockOps<T>`
-Operations for block circulant matrices.
+### `BlockOps<T>` (Legacy)
+Operations for 2D block circulant matrices.
 
 | Method | Description |
 |--------|-------------|
 | `.mul_array(&Array2)` | Matrix-array product |
 
-### `Numeric`
+### `Scalar`
 Trait bounds for numeric types (f32, f64).
 
 ---
@@ -202,6 +249,9 @@ Trait bounds for numeric types (f32, f64).
 | `InvalidSize(String)` | Invalid matrix/state size |
 | `FftError(String)` | FFT operation failed |
 | `NormalizationError` | Cannot normalize zero state |
+| `InvalidTensorShape { expected, got }` | Tensor shape mismatch (New in 1.0) |
+| `InvalidTensorDimension { expected, got }` | Tensor dimension count mismatch (New in 1.0) |
+| `ReshapeFailed(String)` | Tensor reshape failed (New in 1.0) |
 
 ---
 
@@ -213,11 +263,12 @@ Re-exports common items for convenience:
 use circulant_rs::prelude::*;
 
 // Includes:
-// - Circulant, BlockCirculant
-// - CirculantOps, BlockOps
+// - CirculantTensor, Circulant1D, Circulant2D, Circulant3D, Circulant4D
+// - TensorOps, CirculantOps, BlockOps
+// - Circulant, BlockCirculant (deprecated)
 // - CirculantError, Result
-// - Complex (from num_complex)
-// - Array1, Array2 (from ndarray)
+// - RustFftBackend, FftBackend
+// - Scalar, ComplexScalar
 // - Feature-gated: QuantumState, Coin, CoinedWalk1D, etc.
 ```
 

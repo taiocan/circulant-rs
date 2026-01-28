@@ -83,6 +83,28 @@ pub enum CirculantError {
     /// Invalid walk parameters.
     #[error("invalid walk parameters: {0}")]
     InvalidWalkParameters(String),
+
+    /// Invalid tensor shape.
+    #[error("invalid tensor shape: expected {expected:?}, got {got:?}")]
+    InvalidTensorShape {
+        /// Expected shape.
+        expected: Vec<usize>,
+        /// Actual shape.
+        got: Vec<usize>,
+    },
+
+    /// Invalid tensor dimension.
+    #[error("invalid tensor dimension: expected {expected}, got {got}")]
+    InvalidTensorDimension {
+        /// Expected dimension count.
+        expected: usize,
+        /// Actual dimension count.
+        got: usize,
+    },
+
+    /// Reshape operation failed.
+    #[error("reshape failed: {0}")]
+    ReshapeFailed(String),
 }
 
 /// A specialized Result type for circulant operations.
